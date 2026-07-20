@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link, useOutletContext } from 'react-router-dom';
+import { Link, useOutletContext, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Loader2, AlertCircle, ArrowUpDown, Eye, ShoppingCart, Heart, SlidersHorizontal, Tag, X } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
+import { useSelector, useDispatch } from 'react-redux';
+import { authAction } from '@/redux/store';
 
 // Isolated Performance Image Slider Component with rigid single viewport bounds
 function ProductImageSlider({ images, isSoldOut, altText, productId }) {
@@ -48,7 +50,7 @@ function ProductImageSlider({ images, isSoldOut, altText, productId }) {
               style={{ width: '100%', minWidth: '100%' }}
             >
               <img
-                className={`max-w-full max-h-full object-contain transition-opacity duration-300 ${isSoldOut ? 'opacity-40' : 'group-hover/image:scale-105'}`}
+                className={`max-w-full max-h-full object-contain transition-opacity duration-300 ${isSoldOut ? 'opacity-60' : 'group-hover/image:scale-105'}`}
                 src={getSingleImageUrl(img)}
                 alt={`${altText} view ${idx + 1}`}
               />
@@ -57,7 +59,7 @@ function ProductImageSlider({ images, isSoldOut, altText, productId }) {
         ) : (
           <div className="w-full h-full min-w-full shrink-0 flex items-center justify-center p-2" style={{ width: '100%', minWidth: '100%' }}>
             <img
-              className={`max-w-full max-h-full object-contain ${isSoldOut ? 'opacity-40' : ''}`}
+              className={`max-w-full max-h-full object-contain ${isSoldOut ? 'opacity-60' : ''}`}
               src={getSingleImageUrl(null)}
               alt={altText}
             />
@@ -68,14 +70,39 @@ function ProductImageSlider({ images, isSoldOut, altText, productId }) {
   );
 }
 
+// Skeleton component for the product card
+function ProductCardSkeleton() {
+  return (
+    <div className="flex flex-col group border border-gray-200/70 rounded-xl p-3.5 bg-white transition-all duration-300 relative animate-pulse">
+      {/* Image Placeholder */}
+      <div className="bg-gray-200 rounded-lg aspect-square w-full"></div>
+
+      {/* Details Placeholder */}
+      <div className="flex flex-col text-left mt-4 space-y-2">
+        {/* Title Placeholder */}
+        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+        <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+
+        {/* Price Placeholder */}
+        <div className="flex items-baseline gap-1.5 pt-2">
+          <div className="h-5 bg-gray-300 rounded w-1/4"></div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function CategoryGrid({ categoryName }) {
   const { globalSearchQuery } = useOutletContext() || {};
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const isLogin = useSelector((state) => state.auth.isLogin);
 
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
-  
-  const [sortOrder, setSortOrder] = useState('newest'); 
+
+  const [sortOrder, setSortOrder] = useState('newest');
 
   // Mobile Drawer Toggle State
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
@@ -123,10 +150,27 @@ export default function CategoryGrid({ categoryName }) {
     setIsMobileFilterOpen(false); // Auto close mobile view overlay after action triggers
   };
 
-  const handleAddToCart = (e, productId) => {
+  const handleAddToCart = async (e, productId) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log(`Add item ${productId} to shopping cart`);
+
+    if (!isLogin) {
+      alert('You must be logged in to add items to your cart.');
+      navigate('/auth/login');
+      return;
+    }
+
+    try {
+      const { data } = await axios.post(
+        `http://localhost:5000/api/v1/add-to-cart`,
+        { productId, quantity: 1 }
+      );
+      alert('Product added to cart successfully!');
+      dispatch(authAction.setCart(data.cart));
+    } catch (err) {
+      console.error('Error adding to cart:', err);
+      alert(err.response?.data?.message || 'Failed to add product to cart.');
+    }
   };
 
   const handleAddToWishlist = (e, productId) => {
@@ -163,13 +207,13 @@ export default function CategoryGrid({ categoryName }) {
     .sort((a, b) => {
       const brandA = a.brand || '';
       const brandB = b.brand || '';
-      
+
       if (sortOrder === 'asc') return brandA.localeCompare(brandB);
       if (sortOrder === 'desc') return brandB.localeCompare(brandA);
       if (sortOrder === 'price-low') return a.price - b.price;
       if (sortOrder === 'price-high') return b.price - a.price;
-      
-      return 0; 
+
+      return 0;
     });
 
   // Reusable inner markup component structure for the dynamic filter controls sheet
@@ -181,8 +225,8 @@ export default function CategoryGrid({ categoryName }) {
           <h2 className="text-base font-extrabold text-gray-900 uppercase tracking-wide">Filters</h2>
         </div>
         {/* Mobile close toggle cross display */}
-        <button 
-          onClick={() => setIsMobileFilterOpen(false)} 
+        <button
+          onClick={() => setIsMobileFilterOpen(false)}
           className="lg:hidden p-1 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
         >
           <X className="w-4 h-4" />
@@ -195,7 +239,7 @@ export default function CategoryGrid({ categoryName }) {
           <span className="w-1.5 h-1.5 rounded-full bg-rose-600"></span>
           <h3 className="text-xs font-bold text-gray-800 uppercase tracking-wider">Price Range</h3>
         </div>
-        
+
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
             <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Min</label>
@@ -250,7 +294,7 @@ export default function CategoryGrid({ categoryName }) {
             checked={isDiscountedOnly}
             onChange={(e) => {
               setIsDiscountedOnly(e.target.checked);
-              if(window.innerWidth < 1024) setIsMobileFilterOpen(false);
+              if (window.innerWidth < 1024) setIsMobileFilterOpen(false);
             }}
             className="sr-only peer"
           />
@@ -270,13 +314,12 @@ export default function CategoryGrid({ categoryName }) {
               key={tag}
               onClick={() => {
                 setActiveShowroom(tag);
-                if(window.innerWidth < 1024) setIsMobileFilterOpen(false);
+                if (window.innerWidth < 1024) setIsMobileFilterOpen(false);
               }}
-              className={`px-3 py-1.5 rounded-full text-[11px] font-semibold transition-all duration-200 ${
-                activeShowroom === tag
-                  ? 'bg-rose-800 text-white shadow-xs'
-                  : 'bg-gray-50 border border-gray-200 text-gray-500 hover:border-gray-300 hover:bg-gray-100'
-              }`}
+              className={`px-3 py-1.5 rounded-full text-[11px] font-semibold transition-all duration-200 ${activeShowroom === tag
+                ? 'bg-rose-800 text-white shadow-xs'
+                : 'bg-gray-50 border border-gray-200 text-gray-500 hover:border-gray-300 hover:bg-gray-100'
+                }`}
             >
               {tag}
             </button>
@@ -288,7 +331,7 @@ export default function CategoryGrid({ categoryName }) {
 
   return (
     <div className="max-w-[1440px] mx-auto p-4 md:p-6 font-sans antialiased text-gray-900 bg-white h-[calc(100vh-80px)] flex flex-col overflow-hidden relative">
-      
+
       {/* 🚀 1. MOBILE DEVICE TOP CONTROLS STRIP (Sticky bar visible on small devices only) */}
       <div className="lg:hidden shrink-0 sticky top-0 z-40 flex items-center gap-3 bg-white pb-4 border-b border-gray-100">
         <button
@@ -299,7 +342,7 @@ export default function CategoryGrid({ categoryName }) {
           Filters
           <span className="w-1.5 h-1.5 rounded-full bg-white ml-0.5"></span>
         </button>
-        
+
         <div className="flex-1 flex items-center justify-center gap-1.5 bg-white border border-gray-200 px-3 py-2.5 rounded-lg shadow-2xs">
           <ArrowUpDown className="w-3.5 h-3.5 text-gray-400" />
           <select
@@ -317,23 +360,20 @@ export default function CategoryGrid({ categoryName }) {
       </div>
 
       {/* 🚀 2. MOBILE FILTER DRAWER MODULE (Slides cleanly from the left edge) */}
-      <div 
-        className={`lg:hidden fixed inset-0 z-50 transition-visibility duration-300 ${
-          isMobileFilterOpen ? 'visible' : 'invisible'
-        }`}
+      <div
+        className={`lg:hidden fixed inset-0 z-50 transition-visibility duration-300 ${isMobileFilterOpen ? 'visible' : 'invisible'
+          }`}
       >
         {/* Dark Background Overlay Sheet Mask */}
-        <div 
+        <div
           onClick={() => setIsMobileFilterOpen(false)}
-          className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ${
-            isMobileFilterOpen ? 'opacity-100' : 'opacity-0'
-          }`}
+          className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ${isMobileFilterOpen ? 'opacity-100' : 'opacity-0'
+            }`}
         />
         {/* Slide-out Menu Panel Drawer Sheet Container */}
-        <div 
-          className={`absolute top-0 left-0 bottom-0 w-[280px] max-w-[85vw] bg-white p-5 flex flex-col space-y-5 shadow-2xl transition-transform duration-300 ease-in-out overflow-y-auto ${
-            isMobileFilterOpen ? 'translate-x-0' : '-translate-x-full'
-          }`}
+        <div
+          className={`absolute top-0 left-0 bottom-0 w-[280px] max-w-[85vw] bg-white p-5 flex flex-col space-y-5 shadow-2xl transition-transform duration-300 ease-in-out overflow-y-auto ${isMobileFilterOpen ? 'translate-x-0' : '-translate-x-full'
+            }`}
         >
           <RenderFilterContent />
         </div>
@@ -341,7 +381,7 @@ export default function CategoryGrid({ categoryName }) {
 
       {/* Main Framework Grid Setup */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full min-h-0 mt-3 lg:mt-0">
-        
+
         {/* ======================= DESKTOP PERMANENT INLINE SIDEBAR ======================= */}
         <div className="hidden lg:flex lg:col-span-1 h-full overflow-y-auto flex-col space-y-5 border border-gray-100 rounded-xl p-5 bg-white shadow-xs" style={{ scrollbarWidth: 'thin' }}>
           <RenderFilterContent />
@@ -349,7 +389,7 @@ export default function CategoryGrid({ categoryName }) {
 
         {/* ======================= MAIN GRID GALLERY DISPLAY AREA ======================= */}
         <div className="lg:col-span-3 h-full flex flex-col min-h-0 space-y-4">
-          
+
           {/* Top Counter Header controls panel - Hidden on Mobile viewports because metrics live in the top bar */}
           <div className="hidden lg:flex shrink-0 justify-between items-center bg-gray-50/40 border border-gray-100 rounded-xl p-3 px-4">
             <div className="flex items-center gap-2">
@@ -388,8 +428,11 @@ export default function CategoryGrid({ categoryName }) {
           {/* Product Gallery Flow Container Grid */}
           <div className="flex-1 overflow-y-auto pr-1 pb-16" style={{ scrollbarWidth: 'thin' }}>
             {loading ? (
-              <div className="flex justify-center items-center py-24">
-                <Loader2 className="w-8 h-8 text-rose-800 animate-spin" />
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-3 gap-4">
+                {/* Render 6 skeleton cards to fill the initial view */}
+                {[...Array(6)].map((_, index) => (
+                  <ProductCardSkeleton key={index} />
+                ))}
               </div>
             ) : filteredCategoryProducts.length === 0 ? (
               <div className="bg-white rounded-xl border border-dashed border-gray-200 py-20 text-center text-gray-400 text-xs font-medium">
@@ -419,9 +462,12 @@ export default function CategoryGrid({ categoryName }) {
                         {/* Floating Action Menu Overlay */}
                         {!isSoldOut && (
                           <div className="absolute inset-0 bg-black/15 opacity-0 group-hover/image:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-2 z-20 rounded-lg">
-                            <div className="p-2 bg-white rounded-full shadow-md text-gray-700 hover:text-rose-800 hover:scale-110 transition duration-200">
+                            <Link
+                              to={`/product-details/${id}`}
+                              className="p-2 bg-white rounded-full shadow-md text-gray-700 hover:text-rose-800 hover:scale-110 transition duration-200"
+                            >
                               <Eye className="w-4 h-4" />
-                            </div>
+                            </Link>
                             <button
                               onClick={(e) => handleAddToCart(e, id)}
                               className="p-2 bg-rose-800 rounded-full shadow-md text-white hover:bg-rose-900 hover:scale-110 transition duration-200 cursor-pointer"
@@ -441,7 +487,7 @@ export default function CategoryGrid({ categoryName }) {
 
                         {/* Out of Stock Indicator */}
                         {isSoldOut && (
-                          <span className="absolute bottom-2 left-2 bg-rose-600 text-white text-[9px] font-bold px-2 py-0.5 rounded shadow-xs tracking-wider uppercase z-10">
+                          <span className="absolute top-4 left-4 bg-red-600 text-white text-[10px] font-bold px-2.5 py-1 rounded shadow-md tracking-wider uppercase z-10">
                             Sold Out
                           </span>
                         )}
@@ -476,4 +522,4 @@ export default function CategoryGrid({ categoryName }) {
 
     </div>
   );
-}
+} 

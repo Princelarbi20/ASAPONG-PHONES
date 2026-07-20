@@ -10,7 +10,7 @@ import { authAction } from '../../redux/store';
 export const Checkout = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  
+
   // Read login state from Redux
   const isAuthenticated = useSelector((state) => state.auth.isLogin);
 
@@ -18,7 +18,7 @@ export const Checkout = () => {
   const [cartItems, setCartItems] = useState([]);
   const [loadingCart, setLoadingCart] = useState(false);
   const [submittingOrder, setSubmittingOrder] = useState(false);
-  
+
   // Shipping Address Form State
   const [addressData, setAddressData] = useState({
     address: '',
@@ -40,9 +40,8 @@ export const Checkout = () => {
     if (!isAuthenticated) return;
     try {
       setLoadingCart(true);
-      const token = localStorage.getItem('token');
       const response = await axios.get('http://localhost:5000/api/v1/cart', {
-        headers: { Authorization: `Bearer ${token}` }
+        withCredentials: true
       });
 
       if (response.data && Array.isArray(response.data.cart)) {
@@ -94,12 +93,11 @@ export const Checkout = () => {
     const orderToastId = toast.loading("Processing transaction authorization logs...");
     try {
       setSubmittingOrder(true);
-      const token = localStorage.getItem('token');
 
       // Hits your exact single unified order controller path endpoint mapping cleanly
-      const response = await axios.post('http://localhost:5000/api/v1/create-order', 
+      const response = await axios.post('http://localhost:5000/api/v1/create-order',
         { shippingAddress: addressData },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { withCredentials: true }
       );
 
       if (response.data.success) {
@@ -155,7 +153,7 @@ export const Checkout = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        
+
         {/* SHIPPING FORM FIELDS LAYOUT (Left 7 columns) */}
         <form onSubmit={handlePlaceOrder} className="lg:col-span-7 bg-white border border-gray-200 rounded-xl p-6 shadow-sm space-y-6">
           <div className="flex items-center gap-2 border-b border-gray-100 pb-3">
@@ -260,7 +258,7 @@ export const Checkout = () => {
         <div className="lg:col-span-5 space-y-4">
           <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm space-y-4">
             <h2 className="text-lg font-bold text-gray-950 border-b border-gray-100 pb-3">Purchase Invoice Summary</h2>
-            
+
             {/* Scrollable short item display list row elements */}
             <div className="max-h-[220px] overflow-y-auto divide-y divide-gray-100 pr-1 select-none">
               {cartItems.map((item) => {

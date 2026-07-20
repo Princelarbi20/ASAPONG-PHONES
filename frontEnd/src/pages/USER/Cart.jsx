@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { Link, useNavigate } from 'react-router-dom'; 
+import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingBag, Trash2, Plus, Minus, ArrowLeft, Loader2 } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
@@ -10,7 +10,7 @@ import { authAction } from '../../redux/store';
 
 export const Cart = () => {
   const dispatch = useDispatch();
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
 
   const isAuthenticated = useSelector((state) => state.auth.isLogin);
 
@@ -29,10 +29,9 @@ export const Cart = () => {
     try {
       setLoading(true);
       setErrorMsg('');
-      const token = localStorage.getItem('token');
 
       const response = await axios.get('http://localhost:5000/api/v1/cart', {
-        headers: { Authorization: `Bearer ${token}` }
+        withCredentials: true
       });
 
       if (response.data && Array.isArray(response.data.cart)) {
@@ -70,11 +69,9 @@ export const Cart = () => {
 
     const updateToastId = toast.loading("Updating quantity...");
     try {
-      const token = localStorage.getItem('token');
-
       const response = await axios.put(`http://localhost:5000/api/v1/update/${productId}`,
         { quantity: newQuantity },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { withCredentials: true }
       );
 
       // 🚀 FIXED: Robust defensive parsing matching variations of Mongoose schema object maps
@@ -111,10 +108,8 @@ export const Cart = () => {
               toast.dismiss(t.id);
               const deleteToastId = toast.loading("Removing item...");
               try {
-                const token = localStorage.getItem('token');
-
                 const response = await axios.delete(`http://localhost:5000/api/v1/remove/${productId}`, {
-                  headers: { Authorization: `Bearer ${token}` }
+                  withCredentials: true
                 });
 
                 // 🚀 FIXED: Balanced conditional mapping comparison criteria
@@ -123,7 +118,7 @@ export const Cart = () => {
                   return currentId !== productId;
                 }));
                 dispatch(authAction.setCart(response.data?.cart || []));
-                
+
                 toast.success("Item removed from cart.", { id: deleteToastId });
               } catch (err) {
                 console.error("Cart item drop trace request failed:", err);

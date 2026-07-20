@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { Loader2, AlertCircle, ArrowLeft, ShoppingCart, Heart, ShieldCheck, Truck, RotateCcw, Settings, Info, Sparkles } from 'lucide-react';
+import { Loader2, AlertCircle, ArrowLeft, ShoppingCart, Heart, ShieldCheck, Truck, RotateCcw, Settings, Info, Sparkles, Star } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
 import { authAction } from '../redux/store';
 
@@ -11,6 +11,7 @@ export default function ProductDetail() {
   const { id } = useParams();
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const isLogin = useSelector((state) => state.auth.isLogin);
 
   const [product, setProduct] = useState(null);
   const [allProducts, setAllProducts] = useState([]);
@@ -27,10 +28,9 @@ export default function ProductDetail() {
       try {
         setLoading(true);
         setErrorMsg('');
-        const token = localStorage.getItem('token');
 
         const response = await axios.get('http://localhost:5000/api/v1/get-All-product', {
-          headers: { Authorization: `Bearer ${token}` }
+          withCredentials: true
         });
 
         if (!isMounted) return;
@@ -49,7 +49,7 @@ export default function ProductDetail() {
         if (targetItem) {
           setProduct(targetItem);
           setActiveImageIndex(0);
-          setQuantity(1); 
+          setQuantity(1);
         } else {
           setErrorMsg('The requested item could not be found inside active store registries.');
         }
@@ -82,13 +82,19 @@ export default function ProductDetail() {
 
   const handleAddToCart = async () => {
     if (!product) return;
+
+    if (!isLogin) {
+      toast.error("Please log in to add items to your cart.");
+      navigate('/auth/login');
+      return;
+    }
+
     try {
-      const token = localStorage.getItem('token');
       const productId = product._id || product.id;
 
       const response = await axios.post('http://localhost:5000/api/v1/add-to-cart',
         { productId, quantity },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { withCredentials: true }
       );
 
       dispatch(authAction.setCart(response.data?.cart || []));
@@ -131,21 +137,21 @@ export default function ProductDetail() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-10 space-y-8 md:space-y-14 pb-24 md:pb-10">
-      
+
       {/* 1. MAIN UPPER DISPLAY BOX SPLIT GRID */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-10 items-start">
-        
+
         {/* Left Side Gallery Display Window */}
         <div className="md:col-span-6 flex flex-col space-y-4 w-full h-full justify-start">
           <div className="w-full h-[320px] sm:h-[420px] md:h-[450px] max-h-[450px] bg-white border border-gray-100 rounded-2xl relative flex items-center justify-center p-6 shadow-sm overflow-hidden shrink-0">
             <img
               src={getSingleImageUrl(product.images?.[activeImageIndex])}
               alt={product.name}
-              className={`max-w-full max-h-full object-contain transition duration-300 ${isSoldOut ? 'opacity-40' : ''}`}
+              className={`max-w-full max-h-full object-contain transition duration-300 ${isSoldOut ? 'opacity-60' : ''}`}
             />
             {isSoldOut && (
-              <span className="absolute top-4 left-4 bg-rose-600 text-white text-[10px] font-bold px-2.5 py-1 rounded shadow-md tracking-wider uppercase">
-                Out of Stock
+              <span className="absolute top-4 left-4 bg-red-600 text-white text-[10px] font-bold px-2.5 py-1 rounded shadow-md tracking-wider uppercase">
+                Sold Out
               </span>
             )}
           </div>
@@ -156,9 +162,8 @@ export default function ProductDetail() {
                 <button
                   key={idx}
                   onClick={() => setActiveImageIndex(idx)}
-                  className={`w-14 h-14 md:w-20 md:h-20 rounded-xl bg-white border-2 overflow-hidden flex items-center justify-center p-1.5 transition-all cursor-pointer shrink-0 ${
-                    idx === activeImageIndex ? 'border-indigo-600 shadow-sm scale-95' : 'border-gray-100 opacity-70 hover:opacity-100'
-                  }`}
+                  className={`w-14 h-14 md:w-20 md:h-20 rounded-xl bg-white border-2 overflow-hidden flex items-center justify-center p-1.5 transition-all cursor-pointer shrink-0 ${idx === activeImageIndex ? 'border-indigo-600 shadow-sm scale-95' : 'border-gray-100 opacity-70 hover:opacity-100'
+                    }`}
                 >
                   <img src={getSingleImageUrl(img)} alt="Thumbnail index" className="max-w-full max-h-full object-contain" />
                 </button>
@@ -180,6 +185,16 @@ export default function ProductDetail() {
               <p className="text-xs text-gray-400 mt-1.5 font-medium">
                 Brand Line Matrix: <span className="font-bold text-gray-700 uppercase">{product.brand || 'Generic'}</span>
               </p>
+
+              {/* Star Rating Display */}
+              <div className="flex items-center gap-1.5 mt-3">
+                <div className="flex items-center">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className={`w-4 h-4 ${i < Math.round(product.rating || 0) ? 'text-amber-400 fill-amber-400' : 'text-gray-300'}`} />
+                  ))}
+                </div>
+                <span className="text-xs text-gray-500 font-medium">({(product.rating || 0).toFixed(1)})</span>
+              </div>
             </div>
 
             <div className="border-y border-gray-100 py-4 flex flex-row justify-between items-center bg-gray-50/50 px-4 rounded-xl border">
@@ -242,9 +257,8 @@ export default function ProductDetail() {
               <button
                 type="button"
                 onClick={() => setIsWishlisted(!isWishlisted)}
-                className={`p-3 rounded-xl border flex items-center justify-center transition-colors duration-200 cursor-pointer ${
-                  isWishlisted ? 'bg-rose-50 border-rose-200 text-rose-600 shadow-sm' : 'bg-white border-gray-200 text-gray-400 hover:text-rose-500 hover:bg-gray-50'
-                }`}
+                className={`p-3 rounded-xl border flex items-center justify-center transition-colors duration-200 cursor-pointer ${isWishlisted ? 'bg-rose-50 border-rose-200 text-rose-600 shadow-sm' : 'bg-white border-gray-200 text-gray-400 hover:text-rose-500 hover:bg-gray-50'
+                  }`}
               >
                 <Heart className={`w-5 h-5 ${isWishlisted ? 'fill-rose-600' : ''}`} />
               </button>
@@ -269,13 +283,13 @@ export default function ProductDetail() {
           <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1.5 mb-1">
             <Sparkles className="w-4 h-4 text-red-500" /> You May Like
           </h2>
-          
+
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
             {relatedSuggestions.map((item) => {
               const itemId = item._id || item.id;
               const isItemSoldOut = item.stock <= 0;
               return (
-                <div 
+                <div
                   key={itemId}
                   onClick={() => {
                     navigate(`/product-details/${itemId}`);
@@ -285,15 +299,15 @@ export default function ProductDetail() {
                 >
                   {/* Image Grid Frame Box */}
                   <div className="w-full aspect-square bg-slate-50 rounded-xl flex items-center justify-center p-3 relative overflow-hidden mb-3 mix-blend-multiply">
-                    <img 
-                      src={getSingleImageUrl(item.images?.[0])} 
-                      alt={item.name} 
+                    <img
+                      src={getSingleImageUrl(item.images?.[0])}
+                      alt={item.name}
                       className="max-w-full max-h-full object-contain transform group-hover:scale-105 transition duration-500"
                     />
                     {isItemSoldOut && (
-                      <span className="absolute inset-0 bg-white/60 flex items-center justify-center text-[9px] font-black text-rose-600 uppercase tracking-wider">
-                        Out of Stock
-                      </span>
+                      <div className="absolute top-2 left-2">
+                        <span className="bg-red-600 text-white text-[9px] font-bold px-2 py-0.5 rounded shadow-md tracking-wider uppercase">Sold Out</span>
+                      </div>
                     )}
                   </div>
 
@@ -334,13 +348,3 @@ export default function ProductDetail() {
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
-

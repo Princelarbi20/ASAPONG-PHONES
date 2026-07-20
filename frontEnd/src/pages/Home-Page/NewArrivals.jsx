@@ -22,17 +22,17 @@ const NewArrivals = () => {
           }
         }
       );
-      
+
       let allProduct = [];
       if (response.data && Array.isArray(response.data.products)) {
         allProduct = response.data.products;
       } else if (Array.isArray(response.data)) {
         allProduct = response.data;
       }
-      
+
       const filteredNewArrivals = allProduct.filter(product => product.newArrival === true)
       setNewArrivals(filteredNewArrivals)
-      
+
     } catch (error) {
       console.error("Catalog API Fetch Failure:", error)
     } finally {
@@ -52,14 +52,14 @@ const NewArrivals = () => {
 
   return (
     <div className="w-full bg-slate-50   md:px-8  space-y-8 font-sans">
-      
+
       {/* Premium Typography Heading Block with Infinite Smooth Scale Loop */}
       <div className="flex flex-col items-start justify-center w-full border-b border-slate-200 pb-4 animate-[pulse_3s_ease-in-out_infinite]">
-        <Title 
-          text1="NEW" 
-          text2="ARRIVALS" 
-          className="justify-start text-left gap-2 tracking-tight text-2xl md:text-3xl" 
-          text1className="text-slate-900 font-extrabold" 
+        <Title
+          text1="NEW"
+          text2="ARRIVALS"
+          className="justify-start text-left gap-2 tracking-tight text-2xl md:text-3xl"
+          text1className="text-slate-900 font-extrabold"
           text2className="font-light text-rose-600 uppercase tracking-widest"
         />
         <p className="text-xs text-slate-500 mt-1 font-medium tracking-wide">
@@ -80,7 +80,7 @@ const NewArrivals = () => {
             const itemId = item._id || item.id;
             const isItemSoldOut = item.stock <= 0;
             return (
-              <div 
+              <div
                 key={itemId}
                 onClick={() => {
                   navigate(`/product-details/${itemId}`);
@@ -90,14 +90,14 @@ const NewArrivals = () => {
               >
                 {/* Image Showcase Box */}
                 <div className="w-full aspect-square bg-slate-50 rounded-xl flex items-center justify-center p-3 relative overflow-hidden mb-4">
-                  <img 
-                    src={getSingleImageUrl(item.images?.[0])} 
-                    alt={item.name} 
-                    className="max-w-full max-h-full object-contain transform group-hover:scale-105 transition duration-500"
+                  <img
+                    src={getSingleImageUrl(item.images?.[0])}
+                    alt={item.name}
+                    className={`max-w-full max-h-full object-contain transform group-hover:scale-105 transition duration-500 ${isItemSoldOut ? 'opacity-60' : ''}`}
                   />
                   {isItemSoldOut && (
-                    <div className="absolute inset-0 bg-white/80 backdrop-blur-xs flex items-center justify-center">
-                      <span className="text-[10px] font-bold text-slate-700 bg-slate-200/80 px-2.5 py-1 rounded-full uppercase tracking-wider">
+                    <div className="absolute top-2 left-2">
+                      <span className="bg-red-600 text-white text-[9px] font-bold px-2 py-0.5 rounded shadow-md tracking-wider uppercase">
                         Sold Out
                       </span>
                     </div>

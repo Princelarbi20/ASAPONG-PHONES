@@ -268,18 +268,16 @@ export default function AddProduct({ onClose, onRefresh, productToEdit }) {
         data.append('images', image);
       });
 
-      const token = localStorage.getItem('token');
       const endpoint = isEditMode
-        ? `http://localhost:5000/api/v1/products/${productToEdit._id}`
-        : 'http://localhost:5000/api/v1/products';
+        ? `/products/${productToEdit._id}`
+        : '/products';
 
-      await axios({
+      await axiosInstance({
         method: isEditMode ? 'put' : 'post',
         url: endpoint,
         data: data,
         headers: {
           'Content-Type': 'multipart/form-data',
-          Authorization: `Bearer ${token}`
         }
       });
 

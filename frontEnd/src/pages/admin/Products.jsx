@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import axiosInstance from '@/lib/axios';
 import { Plus, Edit3, Trash2, Loader2, AlertCircle, X, Info, Calendar, ChevronLeft, ChevronRight, Star, Settings, Filter, ArrowUpDown, ChevronDown, Search } from 'lucide-react';
 import AddProduct from './AddProduct';
 import UpdateProduct from './UpdateProduct';
@@ -50,11 +50,8 @@ export default function Products() {
       setLoading(true);
       setErrorMsg('');
 
-      const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:5000/api/v1/get-All-product', {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+      const response = await axiosInstance.get('http://localhost:5000/api/v1/get-All-product', {
+        withCredentials: true
       });
 
       if (response.data && Array.isArray(response.data.products)) {
@@ -89,12 +86,8 @@ export default function Products() {
 
     if (confirm('Permanently delete this item from inventory?')) {
       try {
-        const token = localStorage.getItem('token');
-
-        await axios.delete(`http://localhost:5000/api/v1/products-delete/${id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
+        await axiosInstance.delete(`http://localhost:5000/api/v1/products-delete/${id}`, {
+          withCredentials: true
         });
 
         setProducts(prev => prev.filter(p => (p._id || p.id) !== id));

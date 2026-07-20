@@ -10,20 +10,14 @@ export default function SuspendUser({ userId, onSuspended }) {
     if (confirm('Are you sure you want to suspend this user?')) {
       try {
         setIsSuspending(true);
-        
-        // 1. Retrieve the stored JWT token
-        const token = localStorage.getItem('token');
 
-        // 2. Pass the Bearer token inside the Authorization header configuration
         await axios.put(`http://localhost:5000/api/v1/suspend-user/${userId}`, {}, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
+          withCredentials: true
         });
 
         // 3. Trigger parent state update callback on success
         onSuspended();
-      } catch (err) { 
+      } catch (err) {
         console.error('Axios error during user suspension:', err);
         alert(err.response?.data?.message || 'Failed to suspend user. Access Denied.');
       } finally {
@@ -38,7 +32,7 @@ export default function SuspendUser({ userId, onSuspended }) {
       disabled={isSuspending}
       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition border border-rose-200 text-rose-600 hover:bg-rose-50 disabled:bg-rose-50 disabled:cursor-not-allowed"
     >
-      <ShieldAlert className="w-3.5 h-3.5" /> 
+      <ShieldAlert className="w-3.5 h-3.5" />
       {isSuspending ? 'Suspending...' : 'Suspend'}
     </button>
   );

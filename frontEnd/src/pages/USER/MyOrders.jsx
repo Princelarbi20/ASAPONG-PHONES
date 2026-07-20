@@ -47,11 +47,10 @@ export const MyOrders = () => {
         try {
             setLoading(true);
             setErrorMsg('');
-            const token = localStorage.getItem('token');
 
             // Fetch user orders from the backend endpoint
             const response = await axios.get('http://localhost:5000/api/v1/my-orders', {
-                headers: { Authorization: `Bearer ${token}` }
+                withCredentials: true
             });
 
             if (response.data && Array.isArray(response.data.orders)) {

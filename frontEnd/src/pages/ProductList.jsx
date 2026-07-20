@@ -4,6 +4,7 @@ import axios from "axios";
 import { formatPrice } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { Link } from "react-router-dom";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const getSingleImageUrl = (imgStr) => {
   if (!imgStr) return 'https://placehold.co/600x400?text=No+Image';
@@ -31,22 +32,22 @@ const ProductCardImage = ({ images, name, isItemSoldOut, index }) => {
 
   return (
     <div className="w-full aspect-[4/3] bg-slate-50/60 rounded-lg relative overflow-hidden mb-2.5">
-      <div 
+      <div
         className="h-full flex transition-transform duration-700 ease-in-out"
-        style={{ 
+        style={{
           width: `${(images?.length || 1) * 100}%`,
-          transform: `translateX(-${(currentIndex * 100) / (images?.length || 1)}%)` 
+          transform: `translateX(-${(currentIndex * 100) / (images?.length || 1)}%)`
         }}
       >
         {images && images.length > 0 ? (
           images.map((img, i) => (
             <div key={i} className="h-full flex items-center justify-center p-1.5" style={{ width: `${100 / images.length}%` }}>
-              <img src={getSingleImageUrl(img)} alt={`${name} view ${i + 1}`} className="max-w-full max-h-full object-contain pointer-events-none" />
+              <img src={getSingleImageUrl(img)} alt={`${name} view ${i + 1}`} className={`max-w-full max-h-full object-contain pointer-events-none ${isItemSoldOut ? 'opacity-60' : ''}`} />
             </div>
           ))
         ) : (
           <div className="w-full h-full flex items-center justify-center p-1.5">
-            <img src={getSingleImageUrl(null)} alt={name} className="max-w-full max-h-full object-contain" />
+            <img src={getSingleImageUrl(null)} alt={name} className={`max-w-full max-h-full object-contain ${isItemSoldOut ? 'opacity-60' : ''}`} />
           </div>
         )}
       </div>
@@ -60,9 +61,9 @@ const ProductCardImage = ({ images, name, isItemSoldOut, index }) => {
       )}
 
       {isItemSoldOut && (
-        <div className="absolute inset-0 bg-white/70 backdrop-blur-xs flex items-center justify-center z-20">
-          <span className="text-[9px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md uppercase tracking-wide border border-slate-200">Sold Out</span>
-        </div>
+        <span className="absolute top-2 left-2 bg-red-600 text-white text-[9px] font-bold px-2 py-0.5 rounded shadow-md tracking-wider uppercase z-10">
+          Sold Out
+        </span>
       )}
     </div>
   );
@@ -73,6 +74,7 @@ const ProductList = ({ category, linkTo }) => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const scrollContainerRef = useRef(null);
+  const [isHovered, setIsHovered] = useState(false);
 
   const fetchProducts = useCallback(async () => {
     try {
@@ -94,100 +96,129 @@ const ProductList = ({ category, linkTo }) => {
 
   // Container Level: Auto Scroll/Slide row layout every 3 seconds
   useEffect(() => {
-    if (loading || products.length <= 1) return;
+    if (loading || products.length <= 1 || isHovered) return;
 
     const autoScrollInterval = setInterval(() => {
-      const container = scrollContainerRef.current;
-      if (!container) return;
-
-      const cardElement = container.firstChild;
-      if (!cardElement) return;
-
-      const cardWidth = cardElement.getBoundingClientRect().width + 16; // card width + flex gap layout spacing
-      const maxScrollLeft = container.scrollWidth - container.clientWidth;
-
-      if (container.scrollLeft >= maxScrollLeft - 5) {
-        container.scrollTo({ left: 0, behavior: "smooth" });
-      } else {
-        container.scrollBy({ left: cardWidth, behavior: "smooth" });
-      }
+      handleScroll('right');
     }, 3000);
 
     return () => clearInterval(autoScrollInterval);
-  }, [loading, products]);
+  }, [loading, products, isHovered]);
+
+  const handleScroll = (direction) => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const cardElement = container.firstChild;
+    if (!cardElement) return;
+
+    const scrollAmount = cardElement.getBoundingClientRect().width + 16; // card width + flex gap
+
+    if (direction === "next") {
+      if (container.scrollLeft + container.clientWidth >= container.scrollWidth - 10) {
+        container.scrollTo({ left: 0, behavior: "smooth" });
+      } else {
+        container.scrollBy({ left: scrollAmount, behavior: "smooth" });
+      }
+    } else {
+      if (container.scrollLeft <= 10) {
+        container.scrollTo({ left: container.scrollWidth, behavior: "smooth" });
+      } else {
+        container.scrollBy({ left: -scrollAmount, behavior: "smooth" });
+      }
+    }
+  };
 
   return (
     <div className="w-full bg-slate-50 px-3 sm:px-6 py-8 font-sans overflow-hidden">
       {/* Optimized Header Area */}
       <div className="mb-6 border-b border-slate-200 pb-3 flex justify-between items-end">
         <div>
-          <Title 
-            text1={category?.toUpperCase() || "CATALOG"} 
-            text2="COLLECTION" 
-            className="justify-start text-left gap-1.5 tracking-tight text-xl md:text-2xl" 
-            text1className="text-slate-900 font-extrabold" 
+          <Title
+            text1={category?.toUpperCase() || "CATALOG"}
+            text2="COLLECTION"
+            className="justify-start text-left gap-1.5 tracking-tight text-xl md:text-2xl"
+            text1className="text-slate-900 font-extrabold"
             text2className="font-light text-rose-600 uppercase tracking-widest text-lg md:text-xl"
           />
           <p className="text-[11px] text-slate-500 mt-0.5 font-medium tracking-wide">
             Showing {products.length} items in {category}
           </p>
         </div>
-        
+
         {/* 🚀 FIXED: Always renders view link, automatically falling back if linkTo isn't supplied */}
         <div className="shrink-0">
-          <Link 
-            to={linkTo || `/catalog?category=${category?.toLowerCase()}`} 
+          <Link
+            to={linkTo || `/catalog?category=${category?.toLowerCase()}`}
             className="inline-flex items-center gap-1.5 rounded-lg border border-red-700 bg-red-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-red-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-red-300 focus:ring-offset-2"
           >
-            View All 
+            View All
             <span className="transform group-hover:translate-x-0.5 transition-transform duration-200">→</span>
           </Link>
         </div>
       </div>
 
-      {/* Horizontal Overflow Container Strip */}
-      {loading ? (
-        <div className="flex gap-4 overflow-x-hidden pb-4">
-          {[...Array(5)].map((_, index) => (
-            <div key={index} className="bg-slate-100/80 border border-slate-200 rounded-xl h-64 w-[160px] sm:w-[200px] shrink-0 animate-pulse" />
-          ))}
-        </div>
-      ) : products.length > 0 ? (
-        <div 
-          ref={scrollContainerRef}
-          className="flex gap-4 overflow-x-auto pb-4 scrollbar-none snap-x snap-mandatory scroll-smooth"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-        >
-          {products.map((item, index) => {
-            const itemId = item._id || item.id;
-            const isItemSoldOut = item.stock <= 0;
-            return (
-              <div 
-                key={itemId}
-                onClick={() => navigate(`/product-details/${itemId}`)}
-                className="bg-white border border-slate-200/60 rounded-xl p-2.5 flex flex-col justify-between shadow-xs hover:shadow-md transition-all duration-300 cursor-pointer group relative overflow-hidden w-[160px] sm:w-[190px] md:w-[210px] shrink-0 snap-start"
-              >
-                <ProductCardImage images={item.images} name={item.name} isItemSoldOut={isItemSoldOut} index={index} />
+      <div className="relative flex items-center group/nav">
+        {/* Left Scroll Button */}
+        {!loading && products.length > 0 && (
+          <button onClick={() => handleScroll('prev')} className="absolute left-0 z-20 p-2 rounded-full bg-red-100 border-red-200 text-red-700 hover:bg-red-200 shadow-md transition-all opacity-0 group-hover/nav:opacity-100 -translate-x-2 disabled:opacity-0 hover:scale-110 active:scale-95" aria-label="Scroll left">
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+        )}
 
-                <div className="flex-1 flex flex-col justify-between">
-                  <div>
-                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">{item.brand || category}</span>
-                    <h3 className="text-[12px] font-medium text-slate-700 line-clamp-2 group-hover:text-rose-600 transition-colors duration-200 leading-tight min-h-[2rem]">{item.name}</h3>
-                  </div>
-                  
-                  <div className="pt-2 mt-2 border-t border-slate-100/80 flex items-center justify-between">
-                    <span className="text-xs sm:text-sm font-bold text-slate-900">{formatPrice(item.price)}</span>
+        {/* Horizontal Overflow Container Strip */}
+        {loading ? (
+          <div className="flex gap-4 overflow-x-hidden pb-4 w-full">
+            {[...Array(5)].map((_, index) => (
+              <div key={index} className="bg-slate-100/80 border border-slate-200 rounded-xl h-64 w-[160px] sm:w-[200px] shrink-0 animate-pulse" />
+            ))}
+          </div>
+        ) : products.length > 0 ? (
+          <div
+            ref={scrollContainerRef}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+            className="flex gap-4 overflow-x-auto pb-4 scrollbar-none snap-x snap-mandatory scroll-smooth w-full"
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          >
+            {products.map((item, index) => {
+              const itemId = item._id || item.id;
+              const isItemSoldOut = item.stock <= 0;
+              return (
+                <div
+                  key={itemId}
+                  onClick={() => navigate(`/product-details/${itemId}`)}
+                  className="bg-white border border-slate-200/60 rounded-xl p-2.5 flex flex-col justify-between shadow-xs hover:shadow-md transition-all duration-300 cursor-pointer group relative overflow-hidden w-[160px] sm:w-[190px] md:w-[210px] shrink-0 snap-start"
+                >
+                  <ProductCardImage images={item.images} name={item.name} isItemSoldOut={isItemSoldOut} index={index} />
+
+                  <div className="flex-1 flex flex-col justify-between">
+                    <div>
+                      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">{item.brand || category}</span>
+                      <h3 className="text-[12px] font-medium text-slate-700 line-clamp-2 group-hover:text-rose-600 transition-colors duration-200 leading-tight min-h-[2rem]">{item.name}</h3>
+                    </div>
+
+                    <div className="pt-2 mt-2 border-t border-slate-100/80 flex items-center justify-between">
+                      <span className="text-xs sm:text-sm font-bold text-slate-900">{formatPrice(item.price)}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="text-center py-12 text-xs text-slate-400 font-medium italic bg-white border border-dashed border-slate-200 rounded-xl">
-          No products found in the {category} category.
-        </div>
-      )}
+              );
+            })}
+          </div>
+        ) : (
+          <div className="text-center py-12 text-xs text-slate-400 font-medium italic bg-white border border-dashed border-slate-200 rounded-xl w-full">
+            No products found in the {category} category.
+          </div>
+        )}
+
+        {/* Right Scroll Button */}
+        {!loading && products.length > 0 && (
+          <button onClick={() => handleScroll('next')} className="absolute right-0 z-20 p-2 rounded-full bg-red-100 border-red-200 text-red-700 hover:bg-red-200 shadow-md transition-all opacity-0 group-hover/nav:opacity-100 translate-x-2 disabled:opacity-0 hover:scale-110 active:scale-95" aria-label="Scroll right">
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        )}
+      </div>
     </div>
   );
 };

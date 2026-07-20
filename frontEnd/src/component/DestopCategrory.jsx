@@ -44,14 +44,14 @@ const DestopCategory = () => {
 
   return (
     <div className="space-y-8 relative max-w-7xl mx-auto  md:py-12 font-sans">
-      
+
       {/* Premium Typography Heading Block */}
       <div className="flex flex-col items-center text-center justify-center w-full border-b border-slate-200 pb-4">
-        <Title 
-          text1="SHOP BY " 
-          text2="CATEGORY" 
-          className="justify-center text-center gap-2 tracking-tight text-2xl md:text-3xl" 
-          text1className="text-slate-900 font-extrabold" 
+        <Title
+          text1="SHOP BY "
+          text2="CATEGORY"
+          className="justify-center text-center gap-2 tracking-tight text-2xl md:text-3xl"
+          text1className="text-slate-900 font-extrabold"
           text2className="font-light text-rose-600 uppercase tracking-widest"
         />
         <p className="text-xs text-slate-500 mt-1 font-medium tracking-wide max-w-md mx-auto">
@@ -65,7 +65,7 @@ const DestopCategory = () => {
         {/* LEFT NAVIGATIONAL DIRECTIONAL ARROW */}
         <button
           onClick={() => handleScroll('left')}
-          className="absolute left-0 z-30 flex items-center justify-center p-2 rounded-full border border-slate-200 bg-white shadow-md text-slate-600 hover:text-rose-600 hover:bg-slate-50 hover:scale-110 active:scale-95 transition cursor-pointer -translate-x-2 md:-translate-x-4 duration-300 md:opacity-0 group-hover/arrows:opacity-100"
+          className="absolute left-0 z-30 flex items-center justify-center p-2 rounded-full border-red-200 bg-red-100 shadow-md text-red-700 hover:bg-red-200 hover:scale-110 active:scale-95 transition cursor-pointer -translate-x-2 md:-translate-x-4 duration-300 md:opacity-0 group-hover/arrows:opacity-100"
           aria-label="Scroll left"
         >
           <ChevronLeft className="w-5 h-5" />
@@ -106,7 +106,7 @@ const DestopCategory = () => {
         {/* RIGHT NAVIGATIONAL DIRECTIONAL ARROW */}
         <button
           onClick={() => handleScroll('right')}
-          className="absolute right-0 z-30 flex items-center justify-center p-2 rounded-full border border-slate-200 bg-white shadow-md text-slate-600 hover:text-rose-600 hover:bg-slate-50 hover:scale-110 active:scale-95 transition cursor-pointer translate-x-2 md:translate-x-4 duration-300 md:opacity-0 group-hover/arrows:opacity-100"
+          className="absolute right-0 z-30 flex items-center justify-center p-2 rounded-full border-red-200 bg-red-100 shadow-md text-red-700 hover:bg-red-200 hover:scale-110 active:scale-95 transition cursor-pointer translate-x-2 md:translate-x-4 duration-300 md:opacity-0 group-hover/arrows:opacity-100"
           aria-label="Scroll right"
         >
           <ChevronRight className="w-5 h-5" />

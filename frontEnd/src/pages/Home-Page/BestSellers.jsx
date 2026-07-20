@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState, useRef } from "react";
 import Title from "@/component/Title";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import { formatPrice } from '@/lib/utils';
 
 // Premium luxury-breathe keyframe for a smooth, continuous title effect
@@ -27,6 +28,7 @@ const BestSellers = ({ from, end }) => {
   const [loading, setLoading] = useState(true);
   const scrollContainerRef = useRef(null);
   const [isHovered, setIsHovered] = useState(false);
+  const navigate = useNavigate();
 
   const fetchProduct = useCallback(async () => {
     try {
@@ -111,11 +113,11 @@ const BestSellers = ({ from, end }) => {
 
       {/* Header Block */}
       <div className="flex flex-col items-start justify-center w-full border-b border-slate-200 pb-4 origin-left will-change-transform animate-luxury-breathe">
-        <Title 
-          text1="TRENDING" 
-          text2="PHONES" 
-          className="justify-start text-left gap-2 tracking-tight text-2xl md:text-3xl" 
-          text1className="text-slate-900 font-extrabold" 
+        <Title
+          text1="TRENDING"
+          text2="PHONES"
+          className="justify-start text-left gap-2 tracking-tight text-2xl md:text-3xl"
+          text1className="text-slate-900 font-extrabold"
           text2className="font-light text-rose-600 uppercase tracking-widest"
         />
         <p className="text-xs text-slate-500 mt-1 font-medium tracking-wide">
@@ -125,12 +127,12 @@ const BestSellers = ({ from, end }) => {
 
       {/* Main Display Wrap: Flanked by Direction Icons */}
       <div className="flex items-center gap-2 md:gap-4 w-full relative">
-        
+
         {/* Reverse (Previous) Button */}
         {!loading && newArrivals.length > 0 && (
           <button
             onClick={() => handleScroll("prev")}
-            className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-900 hover:text-white hover:border-slate-900 shadow-md active:scale-95 transition-all duration-200 cursor-pointer z-10 flex-shrink-0"
+            className="p-2 rounded-full bg-red-100 border border-red-200 text-red-700 hover:bg-red-200 shadow-md active:scale-95 transition-all duration-200 cursor-pointer z-10 flex-shrink-0 hover:scale-110"
             aria-label="Previous items"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -144,14 +146,14 @@ const BestSellers = ({ from, end }) => {
           {loading ? (
             <div className="flex overflow-x-auto no-scrollbar w-full gap-6 pb-4">
               {[...Array(3)].map((_, index) => (
-                <div 
-                  key={index} 
-                  className="bg-slate-100/80 border border-slate-200 rounded-2xl h-80 w-48 sm:w-60 lg:w-[calc(33.333%-16px)] flex-shrink-0 animate-pulse" 
+                <div
+                  key={index}
+                  className="bg-slate-100/80 border border-slate-200 rounded-2xl h-80 w-48 sm:w-60 lg:w-[calc(33.333%-16px)] flex-shrink-0 animate-pulse"
                 />
               ))}
             </div>
           ) : newArrivals.length > 0 ? (
-            <div 
+            <div
               ref={scrollContainerRef}
               onMouseEnter={() => setIsHovered(true)}
               onMouseLeave={() => setIsHovered(false)}
@@ -163,6 +165,10 @@ const BestSellers = ({ from, end }) => {
 
                 return (
                   <div
+                    onClick={() => {
+                      navigate(`/product-details/${itemId}`);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
                     key={itemId}
                     className="w-48 sm:w-60 lg:w-[calc(33.333%-16px)] bg-white border border-slate-100 rounded-2xl p-3 md:p-4 flex flex-col justify-between shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer group flex-shrink-0 snap-start relative overflow-hidden"
                   >
@@ -171,11 +177,11 @@ const BestSellers = ({ from, end }) => {
                       <img
                         src={getSingleImageUrl(product.images?.[0])}
                         alt={product.name}
-                        className="max-w-full max-h-full object-contain transform group-hover:scale-105 transition duration-500"
+                        className={`max-w-full max-h-full object-contain transform group-hover:scale-105 transition duration-500 ${isItemSoldOut ? 'opacity-60' : ''}`}
                       />
                       {isItemSoldOut && (
-                        <div className="absolute inset-0 bg-white/80 backdrop-blur-xs flex items-center justify-center">
-                          <span className="text-[10px] font-bold text-slate-700 bg-slate-200/80 px-2.5 py-1 rounded-full uppercase tracking-wider">
+                        <div className="absolute top-2 left-2">
+                          <span className="bg-red-600 text-white text-[9px] font-bold px-2 py-0.5 rounded shadow-md tracking-wider uppercase">
                             Sold Out
                           </span>
                         </div>
@@ -218,7 +224,7 @@ const BestSellers = ({ from, end }) => {
         {!loading && newArrivals.length > 0 && (
           <button
             onClick={() => handleScroll("next")}
-            className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-900 hover:text-white hover:border-slate-900 shadow-md active:scale-95 transition-all duration-200 cursor-pointer z-10 flex-shrink-0"
+            className="p-2 rounded-full bg-red-100 border border-red-200 text-red-700 hover:bg-red-200 shadow-md active:scale-95 transition-all duration-200 cursor-pointer z-10 flex-shrink-0 hover:scale-110"
             aria-label="Next items"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

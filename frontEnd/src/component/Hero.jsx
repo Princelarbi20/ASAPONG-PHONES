@@ -9,7 +9,6 @@ const Hero = () => {
   const [devices, setDevices] = useState([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [loading, setLoading] = useState(true)
-
   const fallbackMockData = useMemo(() => [
     {
       _id: "iphone-15-pro-max",
@@ -112,13 +111,13 @@ const Hero = () => {
   // Upgraded specification key parser designed to map exact variations inside your database structure
   const getSpecValueByKey = (keyName) => {
     if (!activeDevice || !activeDevice.specifications) return '';
-    
+
     const searchKey = keyName.toLowerCase();
 
     // Find specifications that match or include your structural naming keys
     const match = activeDevice.specifications.find(s => {
       const currentKey = s.key?.toLowerCase() || '';
-      
+
       if (searchKey === 'storage') {
         return currentKey === 'storage' || currentKey === 'storage capacity' || currentKey === 'memory';
       }
@@ -134,10 +133,10 @@ const Hero = () => {
   return (
     // MAIN WRAPPER
     <div className="bg-slate-50 relative w-full max-w-full h-[30vh] md:h-[45vh] lg:h-[60vh] flex flex-col justify-between p-0 group overflow-hidden">
-      
+
       {/* 1. TOP CONTENT SPLIT CONTAINER */}
       <div className="w-full flex-1 flex flex-row items-center justify-between gap-4 md:gap-8 bg-white px-6 md:px-16 lg:px-24 pt-2 pb-4 sm:py-4 rounded-none relative overflow-hidden">
-        
+
         {loading ? (
           <div className="flex items-center justify-center w-full h-full text-slate-400 font-medium tracking-wide text-sm md:text-lg">
             Configuring latest catalog items...
@@ -149,7 +148,7 @@ const Hero = () => {
               <span className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-red-600 bg-red-50 px-2.5 py-1 rounded-md">
                 {activeDevice?.brand || "Premium"}
               </span>
-              
+
               <h1 className="text-slate-900 font-black text-sm md:text-2xl lg:text-4xl tracking-tight leading-tight uppercase break-words w-full flex flex-col gap-1 md:gap-2">
                 {/* Product Title Label */}
                 <span className="text-indigo-600 font-black block lowercase text-xs md:text-lg lg:text-xl truncate uppercase font-sans tracking-wide">
@@ -185,7 +184,7 @@ const Hero = () => {
             </div>
 
             {/* [CENTER PART] */}
-            <div 
+            <div
               onClick={navigateToProductDetails}
               className="flex-1 h-full w-full min-w-0 flex items-center justify-center z-10 p-2 md:p-4 relative mix-blend-multiply cursor-pointer"
             >
@@ -216,13 +215,13 @@ const Hero = () => {
             {/* Navigation Handles */}
             <button
               onClick={prevSlide}
-              className="hidden md:block absolute left-4 md:left-8 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white shadow-lg p-2 rounded-full text-slate-800 opacity-0 group-hover:opacity-100 transition-all duration-300 border border-slate-100 z-30 cursor-pointer"
+              className="hidden md:block absolute left-4 md:left-8 top-1/2 -translate-y-1/2 bg-red-100 hover:bg-red-200 shadow-md p-2 rounded-full text-red-700 opacity-0 group-hover:opacity-100 transition-all duration-300 border border-red-200 z-30 cursor-pointer hover:scale-110 active:scale-95"
             >
               <FaAngleLeft className="w-5 h-5" />
             </button>
             <button
               onClick={nextSlide}
-              className="hidden md:block absolute right-4 md:right-8 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white shadow-lg p-2 rounded-full text-slate-800 opacity-0 group-hover:opacity-100 transition-all duration-300 border border-slate-100 z-30 cursor-pointer"
+              className="hidden md:block absolute right-4 md:right-8 top-1/2 -translate-y-1/2 bg-red-100 hover:bg-red-200 shadow-md p-2 rounded-full text-red-700 opacity-0 group-hover:opacity-100 transition-all duration-300 border border-red-200 z-30 cursor-pointer hover:scale-110 active:scale-95"
             >
               <FaAngleRight className="w-5 h-5" />
             </button>
@@ -237,9 +236,8 @@ const Hero = () => {
             <button
               key={dotIdx}
               onClick={() => setCurrentIndex(dotIdx)}
-              className={`h-1.5 transition-all duration-300 rounded-full cursor-pointer ${
-                currentIndex === dotIdx ? 'w-6 bg-red-600' : 'w-1.5 bg-slate-300 hover:bg-slate-400'
-              }`}
+              className={`h-1.5 transition-all duration-300 rounded-full cursor-pointer ${currentIndex === dotIdx ? 'w-6 bg-red-600' : 'w-1.5 bg-slate-300 hover:bg-slate-400'
+                }`}
             />
           ))}
         </div>

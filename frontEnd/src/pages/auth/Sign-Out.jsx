@@ -16,7 +16,7 @@ export const SignOut = () => {
       dispatch(authAction.logout());
     }
 
-    window.location.href = '/';
+    window.location.href = 'http://localhost:5173/';
   };
 
   return (
