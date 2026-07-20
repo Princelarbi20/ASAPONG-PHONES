@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom'; 
 import { ShoppingBag, Trash2, Plus, Minus, ArrowLeft, Loader2 } from 'lucide-react';
@@ -24,7 +24,7 @@ export const Cart = () => {
     return `http://localhost:5000/${imgStr.replace(/\\/g, '/')}`;
   };
 
-  const fetchCart = async () => {
+  const fetchCart = useCallback(async () => {
     if (!isAuthenticated) return;
     try {
       setLoading(true);
@@ -50,11 +50,11 @@ export const Cart = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [isAuthenticated]);
 
   useEffect(() => {
     fetchCart();
-  }, [isAuthenticated]);
+  }, [fetchCart]);
 
   const subtotal = cartItems.reduce((acc, item) => {
     const price = item?.productId?.price || item?.price || 0;
@@ -135,7 +135,7 @@ export const Cart = () => {
           </button>
         </div>
       </div>
-    ), { duration: 5000 });
+    ), { duration: 2000 });
   };
 
   if (!isAuthenticated) {

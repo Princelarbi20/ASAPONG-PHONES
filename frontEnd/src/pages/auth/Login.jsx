@@ -29,42 +29,35 @@ const Login = () => {
         fontWeight: '500',
         backgroundColor: '#fff',
       },
-      duration: 4000,
+      duration: 2000,
     };
 
     try {
-
+      // 1. Fetch baseline CSRF configuration with credentials enabled
       const baseConfig = await withCsrf({ withCredentials: true });
-
-      // 🚀 FIXED: If a route requires a token, fetch it using the key you saved ('token')
-      const token = localStorage.getItem("token");
       
-      const config = {
-        ...baseConfig,
-        headers: {
-          ...baseConfig.headers,
-          // Conditionally inject Bearer token if it exists (Optional for login, critical for standard requests)
-          ...(token && { Authorization: `Bearer ${token}` })
-        }
-      };
-
-      // Send authentication payload cleanly with full validation configurations
-      const response = await axios.post('/api/v1/user-login', formData, config);
+      // The backend stores credentials in HttpOnly cookies, which JavaScript
+      // should not read or recreate.
+      const response = await axios.post('/api/v1/user-login', formData, baseConfig);
       const { user } = response.data
 
+      // Handle suspended accounts early
       if (user?.isSuspended || user?.status === 'suspended') {
         toast.error('Your account is suspended. Contact customer care.', errorToastStyle)
         setIsLoading(false)
         return
       }
 
+      // Persist display data only; the JWT remains in the HttpOnly cookie.
       dispatch(authAction.login({ user, role: user?.role }))
       toast.success('Login successful!')
 
+      // Role routing matrix
       const role = user?.role?.toUpperCase()
       if (role === 'ADMIN') navigate('/admin')
       else if (role === 'DEALER') navigate('/dealer')
       else navigate('/')
+      
     } catch (error) {
       console.error("Login component trace logs:", error)
       const serverMessage = error.response?.data?.message || 'Login failed. Please try again.';

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { NavLink, Link, useNavigate, useLocation } from "react-router-dom";
+import { NavLink, Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import axios from 'axios';
 import { authAction } from "../redux/store";
@@ -24,7 +24,6 @@ const Navbar = ({ globalSearchQuery, setGlobalSearchQuery }) => {
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const location = useLocation();
 
   const isAuthenticated = useSelector((state) => state.auth.isLogin);
   const user = useSelector((state) => state.auth.user);

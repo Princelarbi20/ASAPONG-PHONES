@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, CreditCard, MapPin, Loader2, ShoppingBag } from 'lucide-react';
@@ -36,7 +36,7 @@ export const Checkout = () => {
   };
 
   // FETCH ACTIVE USER CART REGISTRY PROFILE FOR PREVIEW SUMMARY
-  const fetchCartSnapshot = async () => {
+  const fetchCartSnapshot = useCallback(async () => {
     if (!isAuthenticated) return;
     try {
       setLoadingCart(true);
@@ -60,11 +60,11 @@ export const Checkout = () => {
     } finally {
       setLoadingCart(false);
     }
-  };
+  }, [isAuthenticated]);
 
   useEffect(() => {
     fetchCartSnapshot();
-  }, [isAuthenticated]);
+  }, [fetchCartSnapshot]);
 
   // Pricing Engine Calculations Matrix
   const subtotal = cartItems.reduce((acc, item) => {

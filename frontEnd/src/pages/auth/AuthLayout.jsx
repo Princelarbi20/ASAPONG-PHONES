@@ -1,6 +1,5 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
-import { Smartphone, Laptop, Cpu } from 'lucide-react';
 import ShopName from '@/component/ShopName';
 export const AuthLayout = () => {
   return (

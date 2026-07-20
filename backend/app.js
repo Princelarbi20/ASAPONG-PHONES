@@ -6,7 +6,9 @@ import cors from "cors";
 import path from 'path';
 import { fileURLToPath } from 'url';
 import cookieParser from 'cookie-parser';
-import verifyToken from './middleware/verifyToken.js';
+
+// 🚀 FIXED: Added the missing named import for verifyToken
+import { verifyToken } from './middleware/verifyToken.js';
 import { refreshToken } from './middleware/refreshToken.js';
 import isAdmin from './middleware/isAdmin.js';
 import { csrfProtection, issueCsrfToken } from './middleware/csrfProtection.js';
@@ -20,7 +22,13 @@ import router from './route/route.js';
 const app = express();
 dotenv.config();
 
-for (const variable of ['MONGO_URI', 'ACCESS_TOKEN_SECRET', 'REFRESH_TOKEN_SECRET']) {
+for (const variable of [
+  'MONGO_URI',
+  'ACCESS_TOKEN_SECRET',
+  'ACCESS_TOKEN_EXPIRE',
+  'REFRESH_TOKEN_SECRET',
+  'REFRESH_TOKEN_EXPIRE'
+]) {
   if (!process.env[variable]) throw new Error(`${variable} must be configured before the server starts.`);
 }
 connectDB();

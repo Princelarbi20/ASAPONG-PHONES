@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { Button } from '@/component/Button'
 import { FaAngleRight, FaAngleLeft } from "react-icons/fa"
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
-import { formatPrice } from '@/lib/utils'
 
 const Hero = () => {
   const navigate = useNavigate()
@@ -11,7 +10,7 @@ const Hero = () => {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [loading, setLoading] = useState(true)
 
-  const fallbackMockData = [
+  const fallbackMockData = useMemo(() => [
     {
       _id: "iphone-15-pro-max",
       name: "iPhone 15 Pro Max",
@@ -46,7 +45,7 @@ const Hero = () => {
         { key: "Screen Size", value: "6.8-inch" }
       ]
     }
-  ];
+  ], []);
 
   useEffect(() => {
     const fetchDeviceData = async () => {
@@ -78,7 +77,11 @@ const Hero = () => {
       }
     };
     fetchDeviceData();
-  }, []);
+  }, [fallbackMockData]);
+
+  const nextSlide = useCallback(() => {
+    setCurrentIndex((prev) => (prev === devices.length - 1 ? 0 : prev + 1));
+  }, [devices.length]);
 
   useEffect(() => {
     if (devices.length === 0) return;
@@ -86,11 +89,7 @@ const Hero = () => {
       nextSlide();
     }, 5000);
     return () => clearInterval(sliderTimer);
-  }, [currentIndex, devices]);
-
-  const nextSlide = () => {
-    setCurrentIndex((prev) => (prev === devices.length - 1 ? 0 : prev + 1));
-  };
+  }, [devices.length, nextSlide]);
 
   const prevSlide = () => {
     setCurrentIndex((prev) => (prev === 0 ? devices.length - 1 : prev - 1));

@@ -1,72 +1,72 @@
-import jwt from "jsonwebtoken";
-import { setAuthCookies, clearAuthCookies } from '../utils/authCookies.js';
+import jwt from 'jsonwebtoken';
+import { clearAuthCookies, setAuthCookies } from '../utils/authCookies.js';
 
-const verifyToken = async (req, res, next) => {
-  try {
-    // 1. Get the Access Token from Authorization header or cookie
-    const authHeader = req.headers.authorization;
-    const headerToken = authHeader && authHeader.split(" ")[1];
-    const token = headerToken || req.cookies?.accessToken;
+// Every protected route uses this middleware first. It accepts a valid access
+// token, or transparently renews it from a valid HttpOnly refresh-token cookie.
+export const verifyToken = (req, res, next) => {
+    const accessToken = req.cookies?.accessToken || req.headers.authorization?.split(' ')[1];
+    const refreshToken = req.cookies?.refreshToken;
 
-    if (!token) {
-      return res.status(401).json({ success: false, message: "Access denied. Login required." });
+    if (!accessToken) {
+        if (!refreshToken) {
+            return res.status(401).json({
+                success: false,
+                message: 'Access denied. Please log in again.'
+            });
+        }
+
+        return refreshSession(req, res, next, refreshToken);
     }
 
     try {
-      // 2. Try to verify Access Token
-      const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET || process.env.JWT_SECRET);
-      req.user = decoded;
-      return next();
+        req.user = jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET);
+        return next();
     } catch (error) {
-      // 3. If Access Token is expired, check for Refresh Token
-      if (error.name === "TokenExpiredError") {
-        const refreshToken = req.cookies?.refreshToken;
+        if (error.name !== 'TokenExpiredError') {
+            return res.status(403).json({
+                success: false,
+                message: 'Access denied. Invalid token.'
+            });
+        }
 
         if (!refreshToken) {
-          return res.status(401).json({ success: false, message: "Session expired. Please login again." });
+            clearAuthCookies(res);
+            return res.status(401).json({
+                success: false,
+                message: 'Your session has expired. Please log in again.'
+            });
         }
 
-        try {
-          // 4. Verify Refresh Token
-          const refreshDecoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
-
-          // 🚀 FIX: Decode the expired access token WITHOUT verification to safely retrieve the email address
-          const expiredPayload = jwt.decode(token);
-          const userEmail = expiredPayload?.email || refreshDecoded.email || "";
-
-          // 5. Generate a fresh Access Token with all required payload fields
-          const newAccessToken = jwt.sign(
-            { 
-              id: refreshDecoded.id, 
-              email: userEmail, // 🚀 Safely populated
-              role: refreshDecoded.role 
-            },
-            process.env.ACCESS_TOKEN_SECRET,
-            { expiresIn: process.env.ACCESS_TOKEN_EXPIRE || "10m" }
-          );
-
-          // Keep refreshed credentials in HttpOnly cookies. The browser never
-          // needs access to a JWT in localStorage or a response header.
-          const newRefreshToken = jwt.sign(
-            { id: refreshDecoded.id, email: userEmail, role: refreshDecoded.role },
-            process.env.REFRESH_TOKEN_SECRET,
-            { expiresIn: process.env.REFRESH_TOKEN_EXPIRE || '7d' }
-          );
-          setAuthCookies(res, newAccessToken, newRefreshToken);
-          
-          req.user = { id: refreshDecoded.id, email: userEmail, role: refreshDecoded.role };
-          req.authRefreshed = true;
-          return next();
-        } catch (refreshErr) {
-          clearAuthCookies(res);
-          return res.status(403).json({ success: false, message: "Invalid refresh session." });
-        }
-      }
-      throw error; // If error is not "Expired", it's "Invalid"
+        return refreshSession(req, res, next, refreshToken);
     }
-  } catch (error) {
-    return res.status(401).json({ success: false, message: "Authentication failed." });
-  }
 };
 
-export default verifyToken;
+const refreshSession = (req, res, next, refreshToken) => {
+    try {
+        const refreshPayload = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+        const payload = {
+            id: refreshPayload.id,
+            email: refreshPayload.email,
+            role: refreshPayload.role
+        };
+        const newAccessToken = jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, {
+            expiresIn: process.env.ACCESS_TOKEN_EXPIRE
+        });
+        const newRefreshToken = jwt.sign(payload, process.env.REFRESH_TOKEN_SECRET, {
+            expiresIn: process.env.REFRESH_TOKEN_EXPIRE
+        });
+
+        setAuthCookies(res, newAccessToken, newRefreshToken);
+        req.user = payload;
+        // The following refreshToken middleware on existing routes can skip its
+        // duplicate verification after this successful rotation.
+        req.authRefreshed = true;
+        return next();
+    } catch (error) {
+        clearAuthCookies(res);
+        return res.status(403).json({
+            success: false,
+            message: 'Your refresh session is invalid or expired. Please log in again.'
+        });
+    }
+};

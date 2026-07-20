@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { ShoppingBag, ArrowLeft, Loader2, Calendar, Package, MapPin, CheckCircle } from 'lucide-react';
 import axios from 'axios';
-import { toast } from 'react-hot-toast';
 import { formatPrice } from '@/lib/utils';
 
 export const MyOrders = () => {
@@ -27,6 +26,10 @@ export const MyOrders = () => {
         switch (status?.toUpperCase()) {
             case 'DELIVERED':
                 return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+            case 'APPROVED':
+                return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+            case 'PENDING':
+                return 'bg-rose-50 text-rose-700 border-rose-200';
             case 'SHIPPED':
                 return 'bg-blue-50 text-blue-700 border-blue-200';
             case 'PROCESSING':
@@ -34,12 +37,12 @@ export const MyOrders = () => {
             case 'CANCELLED':
                 return 'bg-rose-50 text-rose-700 border-rose-200';
             default:
-                return 'bg-slate-50 text-slate-700 border-slate-200';
+                return 'bg-rose-50 text-rose-700 border-rose-200';
         }
     };
 
     // FETCH ORDER HISTORY REGISTRY
-    const fetchUserOrders = async () => {
+    const fetchUserOrders = useCallback(async () => {
         if (!isAuthenticated) return;
         try {
             setLoading(true);
@@ -62,11 +65,11 @@ export const MyOrders = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [isAuthenticated]);
 
     useEffect(() => {
         fetchUserOrders();
-    }, [isAuthenticated]);
+    }, [fetchUserOrders]);
 
     // Guard Clause: User is not logged in
     if (!isAuthenticated) {

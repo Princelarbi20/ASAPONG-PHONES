@@ -22,7 +22,7 @@ export const refreshToken = async (req, res, next) => {
         const newRefreshToken = jwt.sign(
             { id: payload.id, email: payload.email, role: payload.role },
             refreshTokenSecret,
-            { expiresIn: process.env.REFRESH_TOKEN_EXPIRE || '7d' }
+            { expiresIn: process.env.REFRESH_TOKEN_EXPIRE }
         );
 
         setAuthCookies(res, newAccessToken, newRefreshToken);

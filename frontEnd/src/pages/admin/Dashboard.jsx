@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { DollarSign, ShoppingBag, Users, AlertCircle, Package, UserX, Loader2 } from 'lucide-react';
+import { DollarSign, ShoppingBag, Users, Package, UserX, Loader2 } from 'lucide-react';
+import { formatPrice } from '@/lib/utils';
 
 export default function Dashboard() {
   const [stats, setStats] = useState({
@@ -43,7 +44,7 @@ export default function Dashboard() {
 
   // Map the fetched state values dynamically into layout metrics cards
   const analytics = [
-    { title: 'Total Revenue', value: `$${stats.totalRevenue.toFixed(2)}`, icon: DollarSign, color: 'bg-emerald-500' },
+    { title: 'Total Revenue', value: formatPrice(stats.totalRevenue), icon: DollarSign, color: 'bg-emerald-500' },
     { title: 'Active Orders', value: stats.activeOrders.toString(), icon: ShoppingBag, color: 'bg-amber-500' },
     { title: 'Registered Users', value: stats.totalUsers.toString(), icon: Users, color: 'bg-indigo-500' },
     { title: 'Suspended Users', value: stats.suspendedUsers.toString(), icon: UserX, color: 'bg-rose-500' },

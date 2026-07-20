@@ -143,7 +143,7 @@ export default function AddProduct({ onClose, onRefresh, productToEdit }) {
       const availableBrands = CATEGORY_CONFIG[currentCategory]?.brands || [];
       setFormData(prev => ({ ...prev, brand: availableBrands[0] || '', newArrival: false }));
     }
-  }, [productToEdit, isEditMode]);
+  }, [productToEdit, isEditMode, formData.category]);
 
   useEffect(() => {
     if (isEditMode) return;

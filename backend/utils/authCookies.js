@@ -30,8 +30,8 @@ const cookieOptions = (maxAge) => ({
 });
 
 export const setAuthCookies = (res, accessToken, refreshToken) => {
-    res.cookie('accessToken', accessToken, cookieOptions(parseExpiryToMs(process.env.ACCESS_TOKEN_EXPIRE || '15m')));
-    res.cookie('refreshToken', refreshToken, cookieOptions(parseExpiryToMs(process.env.REFRESH_TOKEN_EXPIRE || '7d')));
+    res.cookie('accessToken', accessToken, cookieOptions(parseExpiryToMs(process.env.ACCESS_TOKEN_EXPIRE)));
+    res.cookie('refreshToken', refreshToken, cookieOptions(parseExpiryToMs(process.env.REFRESH_TOKEN_EXPIRE)));
 };
 
 export const clearAuthCookies = (res) => {

@@ -116,9 +116,11 @@ export default function Orders() {
                       <td className="px-6 py-4 font-medium text-gray-900">{customer}</td>
                       <td className="px-6 py-4">{formatPrice(amount)}</td>
                       <td className="px-6 py-4">
-                        <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${order.status === 'SHIPPED' || order.status === 'DELIVERED'
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${['SHIPPED', 'DELIVERED', 'APPROVED'].includes((order.status || 'PENDING').toUpperCase())
                           ? 'bg-emerald-50 text-emerald-700'
-                          : 'bg-amber-50 text-amber-700'
+                          : (order.status || 'PENDING').toUpperCase() === 'PENDING'
+                            ? 'bg-rose-50 text-rose-700'
+                            : 'bg-amber-50 text-amber-700'
                           }`}>
                           {order.status || 'PENDING'}
                         </span>

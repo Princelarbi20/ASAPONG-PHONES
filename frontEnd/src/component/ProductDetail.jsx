@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 import { Loader2, AlertCircle, ArrowLeft, ShoppingCart, Heart, ShieldCheck, Truck, RotateCcw, Settings, Info, Sparkles } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
 import { authAction } from '../redux/store';
@@ -91,10 +92,10 @@ export default function ProductDetail() {
       );
 
       dispatch(authAction.setCart(response.data?.cart || []));
-      alert(`Success: Added ${quantity} unit(s) of "${product.name}" straight to your shopping cart!`);
+      toast.success(`${quantity} unit(s) of "${product.name}" added to your cart.`);
     } catch (err) {
       console.error(err);
-      alert(err.response?.data?.message || "Please log in to manage your cart items.");
+      toast.error(err.response?.data?.message || "Please log in to manage your cart items.");
     }
   };
 
@@ -325,7 +326,7 @@ export default function ProductDetail() {
 
       {/* Trust badging grid layout block rows */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-[11px] text-gray-500 font-medium">
-        <div className="flex items-center gap-2 bg-slate-50/50 border border-gray-100 p-2.5 rounded-xl"><Truck className="w-4 h-4 text-indigo-500 shrink-0" /><span>Free Shipping over $500</span></div>
+        <div className="flex items-center gap-2 bg-slate-50/50 border border-gray-100 p-2.5 rounded-xl"><Truck className="w-4 h-4 text-indigo-500 shrink-0" /><span>Free Shipping over <span className="text-red-600">GH₵ </span><span className="text-black">500</span></span></div>
         <div className="flex items-center gap-2 bg-slate-50/50 border border-gray-100 p-2.5 rounded-xl"><RotateCcw className="w-4 h-4 text-emerald-500 shrink-0" /><span>Hassle-free 14 Day Returns</span></div>
         <div className="flex items-center gap-2 bg-slate-50/50 border border-gray-100 p-2.5 rounded-xl"><ShieldCheck className="w-4 h-4 text-amber-500 shrink-0" /><span>Fully Verified Authentic</span></div>
       </div>

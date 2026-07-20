@@ -28,7 +28,7 @@ export const getCsrfToken = async () => {
         const response = await axios.get('/api/v1/csrf-token', { withCredentials: true });
         csrfToken = response.data?.csrfToken || null;
         return csrfToken;
-    } catch (error) {
+    } catch {
         return null;
     }
 };

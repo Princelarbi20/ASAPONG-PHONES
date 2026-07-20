@@ -2,13 +2,16 @@ import express from 'express'
 const router = express.Router()
 
 import isAdmin from '../middleware/isAdmin.js'
-import verifyToken from '../middleware/verifyToken.js'
+// 🚀 FIXED: Changed path from ./ to ../ to escape the "route" directory folder
+import { verifyToken } from '../middleware/verifyToken.js';
 import { upload } from '../middleware/upload.js'
 import { certificate } from '../middleware/certificatStorage.js'
 import { apiLimiter } from '../middleware/loginLimitation.js'
 import { refreshToken } from '../middleware/refreshToken.js'
 import isDellaer from '../middleware/isDellaer.js'
 import { validateImages, validatePdfs } from '../middleware/validateUploadedFiles.js'
+
+// ... Keep the rest of your file exactly the same!
 // User router endpoint Controllers
 import { userRegisterController } from '../controllers/authController/userRegisterController.js'
 import { userLoginController } from '../controllers/authController/userloginController.js'
@@ -20,6 +23,7 @@ import { updateCartQuantityController } from '../controllers/userController/upda
 import { removeCartItemController } from '../controllers/userController/removeFromCartController.js'
 import { createOrderController } from '../controllers/userController/createOrderController.js'
 import { getUserOrdersController } from '../controllers/userController/getUserOrdersController.js'
+
 // Auth & User routes
 router.post('/user-register', apiLimiter, userRegisterController)
 router.post('/user-login',  userLoginController)
@@ -27,15 +31,15 @@ router.post('/user-log-out', verifyToken, refreshToken, userLogoutController)
 router.put('/user-reset-password', apiLimiter, verifyToken, refreshToken, resetPasswordController)
 
 // Shopping Cart Core Routes
-router.post("/add-to-cart",verifyToken,refreshToken,addToCartController);
-router.get("/cart",verifyToken,refreshToken,getCartController);
-router.get('//my-orders',verifyToken,refreshToken,getUserOrdersController);
+router.post("/add-to-cart", verifyToken, refreshToken, addToCartController);
+router.get("/cart", verifyToken, refreshToken, getCartController);
 router.put('/update/:productId', verifyToken, refreshToken, updateCartQuantityController);
-router.delete('/remove/:productId',refreshToken, removeCartItemController);
+router.delete('/remove/:productId', refreshToken, removeCartItemController);
 
-// FIXED: Clean order creation mapping path matching frontend configurations parameters
+// Clean order creation mapping path matching frontend configurations parameters
 router.post("/create-order", verifyToken, refreshToken, createOrderController);
 router.get("/my-orders", verifyToken, refreshToken, getUserOrdersController)
+
 // Admin controllers route imports
 import { getAllOrdersController } from '../controllers/adminControllers/getAllOrdersController.js'
 import { updateOrderStatusController } from '../controllers/adminControllers/updateOdersStatus.js'
@@ -70,7 +74,6 @@ router.post('/add-new-admin', verifyToken, refreshToken, isAdmin, addnewAdmin)
 router.get("/all-shops", verifyToken, refreshToken, isAdmin, allShops)
 router.post('/get-all-admin', verifyToken, refreshToken, isAdmin, getallAdmin)
 
-
 // Dealer Controllers & routes
 import { addProductDealerController } from '../controllers/dellarController/dellaerAddProduct.js'
 import { createShopRequest } from '../controllers/dellarController/createShopeController.js'
@@ -78,4 +81,4 @@ import { createShopRequest } from '../controllers/dellarController/createShopeCo
 router.post('/create-shop', apiLimiter, certificate.array('files', 3), validatePdfs, createShopRequest);
 router.post('/dellaer-add-product', verifyToken, refreshToken, isDellaer, upload.array("images", 5), validateImages, addProductDealerController);
 
-export default router
+export default router;

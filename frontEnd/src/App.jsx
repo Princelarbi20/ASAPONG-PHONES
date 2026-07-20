@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { Toaster } from 'react-hot-toast'; 
@@ -47,7 +47,7 @@ const App = () => {
         position="top-center"
         reverseOrder={false}
         toastOptions={{
-          duration: 4000,
+          duration: 2000,
           style: {
             width: '30vw',
             maxWidth: '28rem',

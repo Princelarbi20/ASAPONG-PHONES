@@ -13,12 +13,12 @@ const LandingPage = () => {
          <DestopCategrory />
          <NewArrivals />
          <BestSellers />
-         <ProductList category="phones" />
-         <ProductList category="fridge" />
-         <ProductList category="washingmachine" />
-         <ProductList category="laptops" />
-         <ProductList category="television" />
-         <ProductList category="Accessories " />
+         <ProductList category="phones" linkTo="/phones" />
+         <ProductList category="fridge" linkTo="/phones" />
+         <ProductList category="washingmachine" linkTo="/phones" />
+         <ProductList category="laptops" linkTo="/laptops"/>
+         <ProductList category="television" linkTo="/phones"/>
+         <ProductList category="Accessories " linkTo="/phones" />
         <OurPolicy />
       </div>
       

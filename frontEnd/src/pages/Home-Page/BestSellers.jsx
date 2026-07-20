@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useCallback, useEffect, useState, useRef } from "react";
 import Title from "@/component/Title";
 import axios from "axios";
 import { formatPrice } from '@/lib/utils';
@@ -28,7 +28,7 @@ const BestSellers = ({ from, end }) => {
   const scrollContainerRef = useRef(null);
   const [isHovered, setIsHovered] = useState(false);
 
-  const fetchProduct = async () => {
+  const fetchProduct = useCallback(async () => {
     try {
       setLoading(true);
       const { data } = await axios.get(
@@ -56,11 +56,11 @@ const BestSellers = ({ from, end }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [from, end]);
 
   useEffect(() => {
     fetchProduct();
-  }, [from, end]);
+  }, [fetchProduct]);
 
   // Automated Infinite Swapping Loop every 3 seconds (pauses when user hovers mouse over slider)
   useEffect(() => {

@@ -5,6 +5,17 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Keep small viewports fixed to the screen width. Individual carousels retain
+   their own horizontal scrolling without creating a page-level scrollbar. */
+@media (max-width: 1023px) {
+    html,
+    body,
+    #root {
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+}
+
 @theme inline {
     --font-heading: var(--font-sans);
     --font-sans: 'Geist Variable', sans-serif;

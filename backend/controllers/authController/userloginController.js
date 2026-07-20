@@ -1,7 +1,5 @@
-
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-
 import { Register } from "../../modules/userRegister.js";
 import { ShopRequest } from "../../modules/shopRequestSchema.js";
 import { setAuthCookies } from "../../utils/authCookies.js";
@@ -20,21 +18,16 @@ export const userLoginController = async (req, res) => {
 
         const searchEmail = email.toLowerCase().trim();
 
-       
         // 1. REGULAR USER PATHWAY
- 
         const regularUser = await Register.findOne({ email: searchEmail }).select('+password');
 
         if (regularUser) {
-            const isMatch = await bcrypt.compare(
-                password,
-                regularUser.password
-            );
+            const isMatch = await bcrypt.compare(password, regularUser.password);
 
             if (!isMatch) {
                 return res.status(401).json({
                     success: false,
-                    message: "Invalid email or password."
+                    message: "Invalid password."
                 });
             }
 
@@ -45,32 +38,21 @@ export const userLoginController = async (req, res) => {
                 });
             }
 
-            const accessToken = jwt.sign(
-                {
-                    id: regularUser._id,
-                    role: regularUser.role
-                },
-                process.env.ACCESS_TOKEN_SECRET || process.env.JWT_SECRET,
-                {
-                    expiresIn: process.env.ACCESS_TOKEN_EXPIRE || process.env.EXPIRE_TOKEN || '10m'
-                }
+            const token = jwt.sign(
+                { id: regularUser._id, role: regularUser.role },
+                process.env.ACCESS_TOKEN_SECRET,
+                { expiresIn: process.env.ACCESS_TOKEN_EXPIRE }
             );
 
             const refreshToken = jwt.sign(
-                {
-                    id: regularUser._id,
-                    role: regularUser.role
-                },
+                { id: regularUser._id, role: regularUser.role },
                 process.env.REFRESH_TOKEN_SECRET,
-                {
-                    expiresIn: process.env.REFRESH_TOKEN_EXPIRE || '7d'
-                }
+                { expiresIn: process.env.REFRESH_TOKEN_EXPIRE }
             );
 
-            // Sets HttpOnly Cookies securely
-            setAuthCookies(res, accessToken, refreshToken);
+            // 🚀 FIXED: Standardized cookie setup using the shared utility
+            setAuthCookies(res, token, refreshToken);
 
-            // 🚀 FIXED: Added accessToken back into JSON payload response body matching frontend expectations
             return res.status(200).json({
                 success: true,
                 message: "Login successful.",
@@ -87,16 +69,11 @@ export const userLoginController = async (req, res) => {
             });
         }
 
-     
         // 2. DEALER SHOP USER PATHWAY
-      
         const shopUser = await ShopRequest.findOne({ email: searchEmail }).select('+password');
 
         if (shopUser) {
-            const isMatch = await bcrypt.compare(
-                password,
-                shopUser.password
-            );
+            const isMatch = await bcrypt.compare(password, shopUser.password);
 
             if (!isMatch) {
                 return res.status(401).json({
@@ -119,30 +96,20 @@ export const userLoginController = async (req, res) => {
                 });
             }
 
-            const accessToken = jwt.sign(
-                {
-                    id: shopUser._id,
-                    role: shopUser.role
-                },
+            const token = jwt.sign(
+                { id: shopUser._id, role: shopUser.role },
                 process.env.ACCESS_TOKEN_SECRET,
-                {
-                    expiresIn: process.env.ACCESS_TOKEN_EXPIRE
-                }
+                { expiresIn: process.env.ACCESS_TOKEN_EXPIRE }
             );
 
             const refreshToken = jwt.sign(
-                {
-                    id: shopUser._id,
-                    role: shopUser.role
-                },
+                { id: shopUser._id, role: shopUser.role },
                 process.env.REFRESH_TOKEN_SECRET,
-                {
-                    expiresIn: process.env.REFRESH_TOKEN_EXPIRE || '7d'
-                }
+                { expiresIn: process.env.REFRESH_TOKEN_EXPIRE }
             );
 
-            // Sets HttpOnly Cookies securely
-            setAuthCookies(res, accessToken, refreshToken);
+            // 🚀 FIXED: Standardized cookie setup for dealers as well
+            setAuthCookies(res, token, refreshToken);
 
             return res.status(200).json({
                 success: true,
@@ -162,9 +129,7 @@ export const userLoginController = async (req, res) => {
             });
         }
 
-        
         // 3. NO ACCOUNT REGISTRY TRACE
-       
         return res.status(404).json({
             success: false,
             message: "Email is not registered."
@@ -172,7 +137,6 @@ export const userLoginController = async (req, res) => {
 
     } catch (error) {
         console.error("Login Error:", error);
-
         return res.status(500).json({
             success: false,
             message: "Internal server error."

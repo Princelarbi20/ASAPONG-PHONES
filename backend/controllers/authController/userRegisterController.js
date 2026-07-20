@@ -2,7 +2,6 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { Register } from "../../modules/userRegister.js";
 import { setAuthCookies } from "../../utils/authCookies.js";
-
 export const userRegisterController = async (req, res) => {
     try {
         const { userName, email, phone, password } = req.body;
@@ -15,9 +14,9 @@ export const userRegisterController = async (req, res) => {
             });
         }
 
-        // ============================================================================
-        // 🚀 STRICT STRUCTURAL DATA VALIDATION ENGINE
-        // ============================================================================
+
+        //  STRICT STRUCTURAL DATA VALIDATION ENGINE
+  
 
         // A. Name Validation: Letters and spaces only (No symbols allowed)
         const nameRegex = /^[a-zA-Z\s]+$/;
@@ -91,14 +90,14 @@ export const userRegisterController = async (req, res) => {
 
         const token = jwt.sign(
             tokenPayload,
-            process.env.ACCESS_TOKEN_SECRET || process.env.JWT_SECRET,
-            { expiresIn: process.env.ACCESS_TOKEN_EXPIRE || '10m' }
+            process.env.ACCESS_TOKEN_SECRET,
+            { expiresIn: process.env.ACCESS_TOKEN_EXPIRE }
         );
 
         const refreshToken = jwt.sign(
             tokenPayload,
             process.env.REFRESH_TOKEN_SECRET,
-            { expiresIn: process.env.REFRESH_TOKEN_EXPIRE || '7d' }
+            { expiresIn: process.env.REFRESH_TOKEN_EXPIRE }
         );
 
         // 6. Set secure cookies

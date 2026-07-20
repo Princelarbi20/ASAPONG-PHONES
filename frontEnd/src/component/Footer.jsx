@@ -17,12 +17,6 @@ export const Footer = () => {
     </svg>
   );
 
-  const MapPinIcon = () => (
-    <svg width="16" height="16" fill="none" className="shrink-0">
-      <path d="M8 14.5C6.7 13.4 2.7 10 2.7 6.6C2.7 3.9 5 1.6 8 1.6C11 1.6 13.3 3.9 13.3 6.6C13.3 10 9.3 13.4 8 14.5Z" stroke="#90A1B9" strokeWidth="1.5"/>
-    </svg>
-  );
-
   const FacebookIcon = () => <FaFacebookMessenger className="w-5 h-5 text-slate-600 group-hover:text-green-600 transition" />;
   const InstagramIcon = () => <FaInstagram className="w-5 h-5 text-slate-600 group-hover:text-green-600 transition" />;
   const TwitterIcon = () => <FaTwitter className="w-5 h-5 text-slate-600 group-hover:text-green-600 transition" />;
