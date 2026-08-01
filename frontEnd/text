@@ -1,0 +1,269 @@
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import toast from 'react-hot-toast'; // Modern, lightweight toast notification package
+import { Plus, Edit3, Trash2, Loader2, AlertCircle, X, Info, Calendar } from 'lucide-react';
+import AddProduct from './AddProduct';
+import UpdateProduct from './UpdateProduct';
+
+export default function Products() {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [selectedProduct, setSelectedProduct] = useState(null); 
+  const [errorMsg, setErrorMsg] = useState('');
+
+  // GET ALL PRODUCTS FROM INVENTORY
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      setErrorMsg('');
+      
+      const token = localStorage.getItem('token');
+      const response = await axios.get('http://localhost:5000/api/v1/get-All-product', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (response.data && Array.isArray(response.data.products)) {
+        setProducts(response.data.products);
+      } else if (Array.isArray(response.data)) {
+        setProducts(response.data);
+      } else {
+        setProducts([]);
+      }
+    } catch (err) {
+      console.error('Error fetching products:', err);
+      setErrorMsg(err.response?.data?.message || 'Access Denied: Unable to fetch inventory data.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  // DELETE STOCK ITEM WITH ASYNC PROMISE TOASTS
+  const handleDeleteProduct = async (id, e) => {
+    if (e) e.stopPropagation(); // Stops the modal from re-triggering back open on target click
+    
+    if (confirm('Permanently delete this item from inventory?')) {
+      const deleteExecution = async () => {
+        const token = localStorage.getItem('token');
+        await axios.delete(`http://localhost:5000/api/v1/products-delete/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        
+        // Optimistically filter item out of local UI array state matching the ID criteria
+        setProducts((prevProducts) => prevProducts.filter(p => (p._id || p.id) !== id));
+        setSelectedProduct(null); 
+      };
+
+      // Executes visual state changes alongside response promises
+      toast.promise(deleteExecution(), {
+        loading: 'Removing item from stock data records...',
+        success: <b>Product successfully deleted!</b>,
+        error: <b>Failed to remove product from inventory.</b>,
+      });
+    }
+  };
+
+  // Safe helper to resolve relative backend paths dynamically
+  const getImageUrl = (imagesArray) => {
+    if (!imagesArray || imagesArray.length === 0) return 'https://placehold.co/600x400?text=No+Image';
+    const firstImage = imagesArray[0];
+    if (firstImage.startsWith('http')) return firstImage;
+    return `http://localhost:5000/${firstImage.replace(/\\/g, '/')}`;
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header Panel Layout Actions */}
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-gray-800">Inventory Management</h2>
+        <button 
+          onClick={() => setShowAddModal(true)}
+          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm transition"
+        >
+          <Plus className="w-4 h-4" /> Add Product
+        </button>
+      </div>
+
+      {/* Fallback Catch-All Error Notification */}
+      {errorMsg && (
+        <div className="flex items-center gap-2 rounded-lg bg-red-50 p-4 border border-red-200 text-sm font-medium text-red-800">
+          <AlertCircle className="w-5 h-5 flex-shrink-0" />
+          <p>{errorMsg}</p>
+        </div>
+      )}
+
+      {/* Core Inventory View Conditions */}
+      {loading ? (
+        <div className="flex justify-center items-center py-12">
+          <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
+        </div>
+      ) : products.length === 0 ? (
+        <div className="bg-white rounded-xl border border-dashed border-gray-300 py-16 text-center text-gray-400">
+          No products found in inventory.
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {products.map((product) => {
+            const id = product._id || product.id;
+            return (
+              <div 
+                key={id}
+                onClick={() => setSelectedProduct(product)}
+                className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md cursor-pointer transition flex flex-col group"
+              >
+                {/* Image Wrap Asset container */}
+                <div className="relative aspect-video w-full bg-gray-100 overflow-hidden border-b border-gray-100">
+                  <img 
+                    src={getImageUrl(product.images)} 
+                    alt={product.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                  />
+                  <span className="absolute top-2 right-2 bg-slate-900/80 text-white text-[10px] font-bold px-2 py-0.5 rounded backdrop-blur-xs tracking-wider uppercase">
+                    {product.category || 'General'}
+                  </span>
+                </div>
+
+                {/* Details Content Layout */}
+                <div className="p-4 flex-1 flex flex-col justify-between">
+                  <div>
+                    <p className="text-xs font-semibold text-indigo-600 mb-0.5 tracking-wider uppercase">
+                      {product.brand || 'Generic'}
+                    </p>
+                    <h3 className="font-semibold text-gray-900 text-sm line-clamp-1 mb-1">
+                      {product.name}
+                    </h3>
+                  </div>
+                  
+                  <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-50">
+                    <div>
+                      <p className="text-xs text-gray-400">Price</p>
+                      <p className="font-bold text-gray-900 text-sm">${product.price?.toFixed(2)}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-gray-400">Stock</p>
+                      <p className={`text-xs font-semibold ${product.stock > 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                        {product.stock > 0 ? `${product.stock} units` : 'Out of Stock'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* DETAILED DATA TARGET POPUP WINDOW */}
+      {selectedProduct && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 px-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden relative flex flex-col max-h-[90vh]">
+            
+            {/* Header Image Header banner layer */}
+            <div className="w-full h-48 bg-slate-100 relative">
+              <img 
+                src={getImageUrl(selectedProduct.images)} 
+                alt={selectedProduct.name} 
+                className="w-full h-full object-cover"
+              />
+              <button 
+                onClick={() => setSelectedProduct(null)}
+                className="absolute top-3 right-3 bg-slate-900/60 hover:bg-slate-900/80 text-white p-1.5 rounded-full backdrop-blur-xs transition"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Information Grid Container Body */}
+            <div className="p-6 overflow-y-auto space-y-5 flex-1">
+              <div>
+                <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 font-bold rounded text-[10px] uppercase tracking-wider">
+                  {selectedProduct.category}
+                </span>
+                <h3 className="text-xl font-bold text-gray-900 mt-2">{selectedProduct.name}</h3>
+                <p className="text-xs text-gray-400 mt-0.5">Brand Identity: <span className="font-semibold text-gray-600">{selectedProduct.brand || 'N/A'}</span></p>
+              </div>
+
+              {/* Data Metric Summary Rows */}
+              <div className="grid grid-cols-2 gap-4 bg-gray-50 rounded-xl p-3.5 border border-gray-100">
+                <div>
+                  <p className="text-xs text-gray-400 font-medium">MSRP Price</p>
+                  <p className="text-base font-bold text-gray-900">${selectedProduct.price?.toFixed(2)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400 font-medium">Available Inventory</p>
+                  <p className="text-base font-bold text-gray-900">{selectedProduct.stock} Units</p>
+                </div>
+              </div>
+
+              {/* Technical Description Specification Section */}
+              <div className="space-y-1">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1">
+                  <Info className="w-3.5 h-3.5" /> Description Spec
+                </p>
+                <p className="text-sm text-gray-600 leading-relaxed bg-slate-50/50 p-3 rounded-lg border border-gray-100">
+                  {selectedProduct.description || 'No descriptive breakdown was provided for this stock item.'}
+                </p>
+              </div>
+
+              {/* Server Create Time Logs */}
+              <div className="flex items-center gap-3 text-gray-500 text-xs border-t pt-4">
+                <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                <div>
+                  <p className="font-medium text-gray-400 uppercase tracking-tight text-[10px]">Publish Log Timestamp</p>
+                  <p className="font-medium text-gray-700">
+                    {selectedProduct.createdAt 
+                      ? new Date(selectedProduct.createdAt).toLocaleDateString('en-US', {
+                          weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                        })
+                      : 'Initial System Creation Log'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Bottom Operational Action Tray */}
+            <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-between gap-3">
+              <button 
+                onClick={(e) => handleDeleteProduct(selectedProduct._id || selectedProduct.id, e)}
+                className="px-4 py-2 bg-rose-50 text-rose-600 hover:bg-rose-100 font-semibold rounded-lg text-sm transition flex items-center gap-2"
+              >
+                <Trash2 className="w-4 h-4" /> Delete Stock
+              </button>
+              
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => {
+                    setEditingProduct(selectedProduct);
+                    setSelectedProduct(null);
+                  }}
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg text-sm transition flex items-center gap-2"
+                >
+                  <Edit3 className="w-4 h-4" /> Edit Details
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* Target Modal Component Injections */}
+      {showAddModal && <AddProduct onClose={() => setShowAddModal(false)} onRefresh={fetchProducts} />}
+      {editingProduct && <UpdateProduct product={editingProduct} onClose={() => setEditingProduct(null)} onRefresh={fetchProducts} />}
+    </div>
+  );
+}
+
+
+
+
+
