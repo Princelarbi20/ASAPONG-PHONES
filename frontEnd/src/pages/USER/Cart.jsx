@@ -44,7 +44,7 @@ export const Cart = () => {
         setCartItems([]);
       }
     } catch (err) {
-      console.error("Failed to compile user shopping cart matrix data:", err);
+      console.error("Failed to get your shopping cart items:", err);
       setErrorMsg(err.response?.data?.message || "Could not retrieve current cart items registry records.");
     } finally {
       setLoading(false);

@@ -18,19 +18,21 @@ export const userLoginController = async (req, res) => {
 
         const searchEmail = email.toLowerCase().trim();
 
+        // ==========================================
         // 1. REGULAR USER PATHWAY
+        // ==========================================
         const regularUser = await Register.findOne({ email: searchEmail }).select('+password');
 
         if (regularUser) {
-            const isMatch = await bcrypt.compare(password, regularUser.password);
-
-            if (!isMatch) {
-                return res.status(401).json({
+            // Check Lockout Status FIRST (Saves CPU time)
+            if (regularUser.lockUntil && regularUser.lockUntil > Date.now()) {
+                return res.status(403).json({
                     success: false,
-                    message: "Invalid password."
+                    message: "Account is temporarily locked. Try again later."
                 });
             }
 
+            // Check Suspension Status
             if (regularUser.isSuspended) {
                 return res.status(403).json({
                     success: false,
@@ -38,6 +40,32 @@ export const userLoginController = async (req, res) => {
                 });
             }
 
+            // Verify Password
+            const isMatch = await bcrypt.compare(password, regularUser.password);
+
+            if (!isMatch) {
+                regularUser.failedLoginAttempts = (regularUser.failedLoginAttempts || 0) + 1;
+
+                if (regularUser.failedLoginAttempts >= 3) {
+                    regularUser.lockUntil = new Date(Date.now() + 50 * 60 * 1000); // 50 minutes
+                }
+
+                await regularUser.save();
+
+                return res.status(401).json({
+                    success: false,
+                    message: "Invalid email or password." // Generic to prevent account enumeration
+                });
+            }
+
+            // Reset failed login tracking on successful login
+            if (regularUser.failedLoginAttempts > 0 || regularUser.lockUntil) {
+                regularUser.failedLoginAttempts = 0;
+                regularUser.lockUntil = null;
+                await regularUser.save();
+            }
+
+            // Generate Tokens
             const token = jwt.sign(
                 { id: regularUser._id, role: regularUser.role },
                 process.env.ACCESS_TOKEN_SECRET,
@@ -50,7 +78,6 @@ export const userLoginController = async (req, res) => {
                 { expiresIn: process.env.REFRESH_TOKEN_EXPIRE }
             );
 
-            // 🚀 FIXED: Standardized cookie setup using the shared utility
             setAuthCookies(res, token, refreshToken);
 
             return res.status(200).json({
@@ -69,7 +96,9 @@ export const userLoginController = async (req, res) => {
             });
         }
 
+        // ==========================================
         // 2. DEALER SHOP USER PATHWAY
+        // ==========================================
         const shopUser = await ShopRequest.findOne({ email: searchEmail }).select('+password');
 
         if (shopUser) {
@@ -108,7 +137,6 @@ export const userLoginController = async (req, res) => {
                 { expiresIn: process.env.REFRESH_TOKEN_EXPIRE }
             );
 
-            // 🚀 FIXED: Standardized cookie setup for dealers as well
             setAuthCookies(res, token, refreshToken);
 
             return res.status(200).json({
@@ -129,10 +157,12 @@ export const userLoginController = async (req, res) => {
             });
         }
 
-        // 3. NO ACCOUNT REGISTRY TRACE
-        return res.status(404).json({
+        // ==========================================
+        // 3. NO ACCOUNT FOUND
+        // ==========================================
+        return res.status(401).json({
             success: false,
-            message: "Email is not registered."
+            message: "Invalid email or password."
         });
 
     } catch (error) {

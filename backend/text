@@ -48,3 +48,4 @@ PUT    /api/v1/suspend-user/:id
 POST   /api/v1/products
 PUT    /api/v1/products-update/:id
 DELETE /api/v1/products-delete/:id
+http://localhost:5000/api/v1/payment/initialize

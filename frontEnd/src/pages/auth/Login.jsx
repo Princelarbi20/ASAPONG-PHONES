@@ -29,41 +29,50 @@ const Login = () => {
         fontWeight: '500',
         backgroundColor: '#fff',
       },
-      duration: 2000,
+      duration: 3000,
     };
 
     try {
       // 1. Fetch baseline CSRF configuration with credentials enabled
       const baseConfig = await withCsrf({ withCredentials: true });
       
-      // The backend stores credentials in HttpOnly cookies, which JavaScript
-      // should not read or recreate.
+      // 2. Send login request
       const response = await axios.post('/api/v1/user-login', formData, baseConfig);
-      const { user } = response.data
+      const { user, accountType } = response.data;
 
-      // Handle suspended accounts early
-      if (user?.isSuspended || user?.status === 'suspended') {
-        toast.error('Your account is suspended. Contact customer care.', errorToastStyle)
-        setIsLoading(false)
-        return
+      // 3. Persist display data in Redux (JWT remains stored in HttpOnly cookie)
+      dispatch(authAction.login({ user, role: user?.role, accountType }));
+      toast.success('Login successful!');
+
+      // 4. Role-based Navigation Matrix
+      const role = user?.role?.toUpperCase();
+      if (role === 'ADMIN') {
+        navigate('/admin');
+      } else if (accountType === 'DEALER' || role === 'DEALER') {
+        navigate('/dealer');
+      } else {
+        navigate('/');
       }
-
-      // Persist display data only; the JWT remains in the HttpOnly cookie.
-      dispatch(authAction.login({ user, role: user?.role }))
-      toast.success('Login successful!')
-
-      // Role routing matrix
-      const role = user?.role?.toUpperCase()
-      if (role === 'ADMIN') navigate('/admin')
-      else if (role === 'DEALER') navigate('/dealer')
-      else navigate('/')
       
     } catch (error) {
-      console.error("Login component trace logs:", error)
+      console.error("Login component trace logs:", error);
+
+      // Extract backend response error message
       const serverMessage = error.response?.data?.message || 'Login failed. Please try again.';
-      toast.error(serverMessage, errorToastStyle)
+
+      // Handle specific HTTP error status codes from userLoginController
+      if (error.response?.status === 403) {
+        // Account locked (lockUntil) or Suspended (isSuspended) or Dealer Pending/Rejected
+        toast.error(serverMessage, errorToastStyle);
+      } else if (error.response?.status === 401) {
+        // Invalid credentials / incorrect password
+        toast.error(serverMessage, errorToastStyle);
+      } else {
+        // Network errors or 500 server errors
+        toast.error(serverMessage, errorToastStyle);
+      }
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   }
 

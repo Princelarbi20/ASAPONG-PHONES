@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, CreditCard, MapPin, Loader2, ShoppingBag } from 'lucide-react';
+import { ArrowLeft, CreditCard, MapPin, Loader2, ShoppingBag, CheckCircle2 } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { formatPrice } from '@/lib/utils';
@@ -11,13 +11,17 @@ export const Checkout = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  // Read login state from Redux
+  // Read login state and user details from Redux
   const isAuthenticated = useSelector((state) => state.auth.isLogin);
+  const user = useSelector((state) => state.auth.user); // Assumes user info (including email) is stored here
 
   // Core component states
   const [cartItems, setCartItems] = useState([]);
   const [loadingCart, setLoadingCart] = useState(false);
   const [submittingOrder, setSubmittingOrder] = useState(false);
+
+  // Payment Selection State: 'COD' or 'ONLINE'
+  const [paymentMethod, setPaymentMethod] = useState('COD');
 
   // Shipping Address Form State
   const [addressData, setAddressData] = useState({
@@ -28,14 +32,14 @@ export const Checkout = () => {
     postalCode: ''
   });
 
-  // URL parsing helper matrix to match dynamic asset locations seamlessly
+  // URL parsing helper
   const getSingleImageUrl = (imgStr) => {
     if (!imgStr) return 'https://placehold.co/150?text=No+Image';
     if (imgStr.startsWith('http')) return imgStr;
     return `http://localhost:5000/${imgStr.replace(/\\/g, '/')}`;
   };
 
-  // FETCH ACTIVE USER CART REGISTRY PROFILE FOR PREVIEW SUMMARY
+  // FETCH ACTIVE USER CART SNAPSHOT
   const fetchCartSnapshot = useCallback(async () => {
     if (!isAuthenticated) return;
     try {
@@ -65,7 +69,7 @@ export const Checkout = () => {
     fetchCartSnapshot();
   }, [fetchCartSnapshot]);
 
-  // Pricing Engine Calculations Matrix
+  // Pricing Engine Calculations
   const subtotal = cartItems.reduce((acc, item) => {
     const price = item.productId?.price || 0;
     return acc + price * (item.quantity || 1);
@@ -80,33 +84,78 @@ export const Checkout = () => {
     setAddressData(prev => ({ ...prev, [name]: value }));
   };
 
-  // HANDLER: PLACE THE FINAL ORDER
+  // HANDLER: PLACE THE FINAL ORDER OR INITIALIZE PAYMENT
   const handlePlaceOrder = async (e) => {
     e.preventDefault();
 
-    // Guard Clause: Block empty checkouts
     if (cartItems.length === 0) {
       toast.error("Your shopping cart is empty!");
       return;
     }
 
-    const orderToastId = toast.loading("Processing transaction authorization logs...");
+    const orderToastId = toast.loading("Processing order...");
     try {
       setSubmittingOrder(true);
 
-      // Hits your exact single unified order controller path endpoint mapping cleanly
-      const response = await axios.post('http://localhost:5000/api/v1/create-order',
-        { shippingAddress: addressData },
+      // 1. Create the pending order first in backend
+      const orderResponse = await axios.post(
+        'http://localhost:5000/api/v1/create-order',
+        { 
+          shippingAddress: addressData,
+          paymentMethod 
+        },
         { withCredentials: true }
       );
 
-      if (response.data.success) {
+      if (!orderResponse.data.success) {
+        throw new Error(orderResponse.data.message || "Failed to create order");
+      }
+
+      const createdOrder = orderResponse.data.order || orderResponse.data.data;
+      const orderId = createdOrder?._id;
+
+      // 2. Handle Payment logic based on selected method
+      if (paymentMethod === 'ONLINE') {
+        toast.loading("Redirecting to payment gateway...", { id: orderToastId });
+
+        const userEmail = user?.email || createdOrder?.user?.email;
+
+        if (!userEmail) {
+          toast.error("User email missing. Please try again.", { id: orderToastId });
+          setSubmittingOrder(false);
+          return;
+        }
+
+        // Initialize Paystack Payment
+        const paymentResponse = await axios.post(
+          ' http://localhost:5000/api/v1/payment/initialize',
+          {
+            email: userEmail,
+            amount: total,
+            orderId: orderId
+          },
+          { withCredentials: true }
+        );
+
+        if (paymentResponse.data.success && paymentResponse.data.data?.authorization_url) {
+          // Clear cart state before redirecting
+          dispatch(authAction.setCart([]));
+          setCartItems([]);
+          
+          // Redirect user to Paystack checkout page
+          window.location.href = paymentResponse.data.data.authorization_url;
+        } else {
+          toast.error("Failed to initialize payment gateway.", { id: orderToastId });
+        }
+
+      } else {
+        // COD Route
         dispatch(authAction.setCart([]));
         setCartItems([]);
-        toast.success("Order transaction authorization completed successfully!", { id: orderToastId });
-        // Redirect directly to home/dashboard viewport layout cleanly
+        toast.success("Order placed successfully!", { id: orderToastId });
         navigate('/');
       }
+
     } catch (err) {
       console.error("Checkout submission failed:", err);
       toast.error(err.response?.data?.message || "Could not complete your purchase transaction.", { id: orderToastId });
@@ -146,15 +195,15 @@ export const Checkout = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-6">
-        <Link to="/cart" className="inline-flex items-center gap-2 text-xs font-bold text-gray-400 hover:text-gray-700 uppercase tracking-wider transition-colors">
-          <ArrowLeft className="w-3.5 h-3.5" /> Return to Cart basket
+        <Link to="/cart" className="inline-flex items-center gap-2 font-bold text-black text-[10px] hover:bg-green-100 uppercase tracking-wider transition-colors border p-2 bg-green-50">
+          <ArrowLeft className="w-3.5 h-3.5" /> Return to Cart
         </Link>
-        <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight mt-3">Checkout Verification</h1>
+        <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight mt-3">Shipping Address</h1>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
-        {/* SHIPPING FORM FIELDS LAYOUT (Left 7 columns) */}
+        {/* SHIPPING FORM FIELDS LAYOUT */}
         <form onSubmit={handlePlaceOrder} className="lg:col-span-7 bg-white border border-gray-200 rounded-xl p-6 shadow-sm space-y-6">
           <div className="flex items-center gap-2 border-b border-gray-100 pb-3">
             <MapPin className="w-5 h-5 text-green-600" />
@@ -230,13 +279,62 @@ export const Checkout = () => {
             </div>
           </div>
 
+          {/* PAYMENT OPTIONS */}
           <div className="flex items-center gap-2 border-t border-gray-100 pt-6 pb-2">
             <CreditCard className="w-5 h-5 text-green-600" />
-            <h2 className="text-lg font-bold text-gray-950">Payment Terms</h2>
+            <h2 className="text-lg font-bold text-gray-950">Payment Method</h2>
           </div>
-          <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-between">
-            <span className="text-sm text-gray-700 font-semibold">Cash On Delivery (COD)</span>
-            <span className="text-xs bg-green-100 text-green-800 font-extrabold px-2 py-0.5 rounded tracking-wide uppercase">Default Option</span>
+
+          <div className="space-y-3">
+            {/* CASH ON DELIVERY OPTION */}
+            <label 
+              onClick={() => setPaymentMethod('COD')}
+              className={`p-4 border rounded-lg flex items-center justify-between cursor-pointer transition ${
+                paymentMethod === 'COD' 
+                  ? 'border-green-600 bg-green-50/30 ring-1 ring-green-600' 
+                  : 'border-slate-200 bg-slate-50 hover:bg-gray-100'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <input 
+                  type="radio" 
+                  name="paymentMethod" 
+                  checked={paymentMethod === 'COD'} 
+                  onChange={() => setPaymentMethod('COD')}
+                  className="w-4 h-4 text-green-600 focus:ring-green-500"
+                />
+                <div>
+                  <span className="text-sm text-gray-900 font-bold block">Cash On Delivery (COD)</span>
+                  <span className="text-xs text-gray-500">Pay cash upon receiving your order</span>
+                </div>
+              </div>
+              {paymentMethod === 'COD' && <CheckCircle2 className="w-5 h-5 text-green-600" />}
+            </label>
+
+            {/* PAY BEFORE DELIVERY OPTION */}
+            <label 
+              onClick={() => setPaymentMethod('ONLINE')}
+              className={`p-4 border rounded-lg flex items-center justify-between cursor-pointer transition ${
+                paymentMethod === 'ONLINE' 
+                  ? 'border-green-600 bg-green-50/30 ring-1 ring-green-600' 
+                  : 'border-slate-200 bg-slate-50 hover:bg-gray-100'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <input 
+                  type="radio" 
+                  name="paymentMethod" 
+                  checked={paymentMethod === 'ONLINE'} 
+                  onChange={() => setPaymentMethod('ONLINE')}
+                  className="w-4 h-4 text-green-600 focus:ring-green-500"
+                />
+                <div>
+                  <span className="text-sm text-gray-900 font-bold block">Pay Before Delivery</span>
+                  <span className="text-xs text-gray-500">Instant & secure card / Mobile Money payment via Paystack</span>
+                </div>
+              </div>
+              {paymentMethod === 'ONLINE' && <CheckCircle2 className="w-5 h-5 text-green-600" />}
+            </label>
           </div>
 
           <button
@@ -246,20 +344,21 @@ export const Checkout = () => {
           >
             {submittingOrder ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin" /> Authorizing purchase profile...
+                <Loader2 className="w-4 h-4 animate-spin" /> Processing order...
               </>
+            ) : paymentMethod === 'ONLINE' ? (
+              `Pay Now (${formatPrice(total)})`
             ) : (
               "Confirm & Authorize Order"
             )}
           </button>
         </form>
 
-        {/* ORDER SNAPSHOT BREAKDOWN SUMMARY (Right 5 columns) */}
+        {/* ORDER SUMMARY */}
         <div className="lg:col-span-5 space-y-4">
           <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm space-y-4">
             <h2 className="text-lg font-bold text-gray-950 border-b border-gray-100 pb-3">Purchase Invoice Summary</h2>
 
-            {/* Scrollable short item display list row elements */}
             <div className="max-h-[220px] overflow-y-auto divide-y divide-gray-100 pr-1 select-none">
               {cartItems.map((item) => {
                 const product = item.productId || {};
@@ -267,7 +366,6 @@ export const Checkout = () => {
                   <div key={product._id || item._id} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
                     <div className="w-12 h-12 bg-white rounded-md border border-gray-100 flex items-center justify-center overflow-hidden p-1 shrink-0">
                       <img
-                        // FIXED: Wrapped the source parameter inside the layout asset helper function cleanly
                         src={getSingleImageUrl(product.images?.[0] || product.image)}
                         alt={product.name || "Snapshot preview"}
                         className="object-contain w-full h-full"

@@ -19,6 +19,9 @@ import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import ResetPassword from "./pages/auth/ResetPassword";
 import PageNotFound from "./component/PageNotFound";
+
+
+// Home page imports 
 import HomePage from './pages/Home-Page/HomePage';
 import LandingPage from './pages/Home-Page/LandingPage';
 import CheckAuth from './Data/CheckAuth'; // Fully synchronous guard engine
