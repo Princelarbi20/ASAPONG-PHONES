@@ -60,7 +60,7 @@ const router = express.Router();
 // ------------------------------------------
 // 1. Authentication Routes
 // ------------------------------------------
-router.post('/user-register', apiLimiter, userRegisterController);
+router.post('/user-register', userRegisterController);
 router.post('/user-login', userLoginController);
 router.post('/user-log-out', verifyToken, refreshToken, userLogoutController);
 router.put('/user-reset-password', apiLimiter, verifyToken, refreshToken, resetPasswordController);

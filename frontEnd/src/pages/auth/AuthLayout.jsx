@@ -28,7 +28,7 @@ export const AuthLayout = () => {
       </div>
 
       {/* RIGHT SIDE: Interactive Client Form Panel Wrapper */}
-      <main className="w-full lg:w-1/2 flex flex-col justify-center items-center px-4 sm:px-8 py-4 relative bg-blue-200 h-full overflow-hidden">
+      <main className="w-full lg:w-1/2  flex flex-col justify-center items-center px-4 sm:px-8 py-4 relative bg-blue-200 h-full overflow-hidden">
         {/* Outer dynamic nested child container space - 100% locked size */}
         <div className="w-full max-w-md flex flex-col justify-center items-center h-full max-h-full overflow-hidden">
           <Outlet />

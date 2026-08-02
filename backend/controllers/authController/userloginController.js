@@ -58,6 +58,15 @@ export const userLoginController = async (req, res) => {
                 });
             }
 
+            // 🚨 NEW CHECK: Prevent unverified users from logging in
+            if (!regularUser.isVerified) {
+                return res.status(403).json({
+                    success: false,
+                    message: "Please verify your email address via OTP before logging in.",
+                    isVerified: false
+                });
+            }
+
             // Reset failed login tracking on successful login
             if (regularUser.failedLoginAttempts > 0 || regularUser.lockUntil) {
                 regularUser.failedLoginAttempts = 0;
@@ -90,6 +99,7 @@ export const userLoginController = async (req, res) => {
                     email: regularUser.email,
                     phone: regularUser.phone,
                     role: regularUser.role,
+                    isVerified: regularUser.isVerified,
                     isSuspended: regularUser.isSuspended,
                     cart: regularUser.cart
                 }

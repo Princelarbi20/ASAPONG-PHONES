@@ -39,6 +39,9 @@ import ProductDetail from './component/ProductDetail';
 // Dealer shell imports
 import ShopRegister from './pages/DELLEAR/ShopRegister';
 import DellearLayout from './pages/DELLEAR/DellearLayout';
+import OtpVerification from './pages/auth/OtpVerification';
+
+
 const App = () => {
   const isAuthenticated = useSelector((state) => state.auth.isLogin);
   const user = useSelector((state) => state.auth.user);
@@ -112,7 +115,7 @@ const App = () => {
 
         {/* Public Merchant Onboarding Route */}
         <Route path="/register-store" element={<ShopRegister />} />
-
+        
         
         <Route path="/auth" element={ 
           <CheckAuth isAuthenticated={isAuthenticated} user={user}>
@@ -123,6 +126,7 @@ const App = () => {
           <Route path="register" element={<Register />} />       
           <Route path="login" element={<Login />} />             
           <Route path="reset-password" element={<ResetPassword />} />
+          <Route path="otp-verify" element={<OtpVerification/>} />
         </Route>
 
         {/* 

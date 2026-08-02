@@ -1,51 +1,62 @@
 import mongoose from "mongoose";
+
 const userRegisterSchema = new mongoose.Schema({
-     userName: {
+    userName: {
         type: String,
         required: true,
         trim: true 
-     },
-     phone: {
-         type: String, 
-         required: true,
-     },
-     email: {
+    },
+    phone: {
+        type: String, 
+        required: true,
+        unique: true // Added database-level unique constraint
+    },
+    email: {
         type: String,
         required: true,
         unique: true,
         lowercase: true,
         trim: true
-     },
-     password: {
+    },
+    password: {
         type: String,
         required: true,
         select: false,
-     },
-     role: {
+    },
+    role: {
         type: String,
-        enum: ['USER', 'ADMIN', 'DEALER',], 
+        enum: ['USER', 'ADMIN', 'DEALER'], 
         default: "USER" , 
-     },
-    
-     isSuspended: {
+    },
+    isVerified: { // Fixed: Added missing verification state
         type: Boolean,
         default: false
-     },
-     failedLoginAttempts: {
-    type: Number,
-    default: 0,
-},
-
-lockUntil: {
-    type: Date,
-    default: null,
-},
-     cart: [
+    },
+    isSuspended: {
+        type: Boolean,
+        default: false
+    },
+    failedLoginAttempts: {
+        type: Number,
+        default: 0,
+    },
+    lockUntil: {
+        type: Date,
+        default: null,
+    },
+    otp: {
+        type: String,
+        select: false // Recommended: Hide hashed OTP from default queries for security
+    },
+    otpExpires: { // Fixed: Corrected typo from otpEpires to otpExpires
+        type: Date
+    },
+    cart: [
         {
-           productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product" },
-           quantity: { type: Number, default: 1 }
+            productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product" },
+            quantity: { type: Number, default: 1 }
         }
-     ]
+    ]
 }, { 
     timestamps: true 
 });
