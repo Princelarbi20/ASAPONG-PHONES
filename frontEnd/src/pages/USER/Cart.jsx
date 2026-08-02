@@ -30,7 +30,7 @@ export const Cart = () => {
       setLoading(true);
       setErrorMsg('');
 
-      const response = await axios.get('http://localhost:5000/api/v1/cart', {
+      const response = await axios.get('/api/v1/cart', {
         withCredentials: true
       });
 
@@ -69,7 +69,7 @@ export const Cart = () => {
 
     const updateToastId = toast.loading("Updating quantity...");
     try {
-      const response = await axios.put(`http://localhost:5000/api/v1/update/${productId}`,
+      const response = await axios.put(`/api/v1/update/${productId}`,
         { quantity: newQuantity },
         { withCredentials: true }
       );
@@ -108,7 +108,7 @@ export const Cart = () => {
               toast.dismiss(t.id);
               const deleteToastId = toast.loading("Removing item...");
               try {
-                const response = await axios.delete(`http://localhost:5000/api/v1/remove/${productId}`, {
+                const response = await axios.delete(`/api/v1/remove/${productId}`, {
                   withCredentials: true
                 });
 

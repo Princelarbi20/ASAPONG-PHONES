@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import { Register } from "../../modules/userRegister.js";
 import { ShopRequest } from "../../modules/shopRequestSchema.js";
 import { setAuthCookies } from "../../utils/authCookies.js";
+import { createAndStoreOtp, normalizeEmail, sendOtpEmail, getOtpCooldownRemaining } from "../../utils/otpHelpers.js";
 
 export const userLoginController = async (req, res) => {
     try {
@@ -16,7 +17,7 @@ export const userLoginController = async (req, res) => {
             });
         }
 
-        const searchEmail = email.toLowerCase().trim();
+        const searchEmail = normalizeEmail(email);
 
         // ==========================================
         // 1. REGULAR USER PATHWAY
@@ -58,12 +59,27 @@ export const userLoginController = async (req, res) => {
                 });
             }
 
-            // 🚨 NEW CHECK: Prevent unverified users from logging in
             if (!regularUser.isVerified) {
+                const remainingCooldown = getOtpCooldownRemaining(regularUser);
+                if (remainingCooldown > 0) {
+                    return res.status(429).json({
+                        success: false,
+                        code: 'OTP_COOLDOWN',
+                        message: `Please wait ${remainingCooldown} seconds before requesting a new verification code.`,
+                        requiresVerification: true,
+                        email: regularUser.email
+                    });
+                }
+
+                const otp = await createAndStoreOtp(regularUser);
+                await sendOtpEmail(regularUser, otp);
+
                 return res.status(403).json({
                     success: false,
-                    message: "Please verify your email address via OTP before logging in.",
-                    isVerified: false
+                    code: 'ACCOUNT_NOT_VERIFIED',
+                    message: 'Your account has not been verified. A new verification code has been sent.',
+                    requiresVerification: true,
+                    email: regularUser.email
                 });
             }
 

@@ -8,6 +8,7 @@ import AdminLayout from "./pages/admin/AdminLayout";
 import Dashboard from "./pages/admin/Dashboard";
 import Products from "./pages/admin/Products";
 import Orders from "./pages/admin/Orders";
+import OrderDetails from "./pages/admin/OrderDetails";
 import Users from "./pages/admin/Users";
 import { AddNewUser } from "./pages/admin/Add-New-User";
 import ShopRequests from './pages/admin/ShopRequests';
@@ -139,7 +140,8 @@ const App = () => {
         }>
           <Route index element={<Dashboard />} />       
           <Route path="products" element={<Products />} />     
-          <Route path="orders" element={<Orders />} />         
+          <Route path="orders" element={<Orders />} />
+          <Route path="orders/:orderId" element={<OrderDetails />} />
           <Route path="users" element={<Users />} />           
           <Route path="add-user" element={<AddNewUser />} />
           <Route path="shop-request" element={<ShopRequests />} />

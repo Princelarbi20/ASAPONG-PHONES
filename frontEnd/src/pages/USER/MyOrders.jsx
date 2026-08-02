@@ -49,7 +49,7 @@ export const MyOrders = () => {
             setErrorMsg('');
 
             // Fetch user orders from the backend endpoint
-            const response = await axios.get('http://localhost:5000/api/v1/my-orders', {
+            const response = await axios.get('/api/v1/my-orders', {
                 withCredentials: true
             });
 

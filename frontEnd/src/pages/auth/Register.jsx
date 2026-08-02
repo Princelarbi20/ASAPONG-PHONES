@@ -28,7 +28,13 @@ const Register = () => {
       // 🚀 withCredentials guarantees cookies are accepted and stored automatically by the browser
       const config = await withCsrf({ withCredentials: true })
       const response = await axios.post('/api/v1/user-register', formData, config)
-      const { user } = response.data
+      const { user, requiresOtpVerification } = response.data
+
+      if (requiresOtpVerification) {
+        toast.success('Account created! Please verify your OTP to activate your account.')
+        navigate('/auth/otp-verify', { state: { email: user?.email } })
+        return
+      }
 
       dispatch(authAction.login({ user, token: null, role: user?.role }))
 

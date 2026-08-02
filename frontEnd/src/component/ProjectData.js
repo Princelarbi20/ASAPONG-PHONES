@@ -1,37 +1,36 @@
 // FIXED: Removed all asset imports to use clean, direct public string references instead
-export const profileDetails=[
-   {
+export const profileDetails = [
+  {
     id: 1,
     name: "Home",
     to: "/",
   },
-   {
+  {
     id: 2,
     name: "About Us",
     to: "/about",
   },
-   {
-    id:3,
+  {
+    id: 3,
     name: "My Orders",
     to: "/my-orders",
-   
   },
-   {
+  {
     id: 4,
     name: "Contact",
     to: "/contact",
   },
-    {
-    id: 4,
-    name: "Cart",
-    to: "/contact",
-  },
-    {
+  {
     id: 5,
-    name: " Wishlist",
+    name: "Cart",
+    to: "/cart",
+  },
+  {
+    id: 6,
+    name: "Wishlist",
     to: "/wishlist",
   },
-]
+];
 
 
 

@@ -302,7 +302,7 @@ const Navbar = ({ globalSearchQuery, setGlobalSearchQuery }) => {
         <div className="flex flex-col gap-1.5 overflow-y-auto max-h-[60vh] pr-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {targetMenuLinks.map((items) => (
             <NavLink
-              key={items.id}
+              key={items.to || `${items.id}-${items.name}`}
               to={items.to}
               onClick={() => setIsMenuOpen(false)}
               className={({ isActive }) => `
@@ -400,7 +400,7 @@ const Navbar = ({ globalSearchQuery, setGlobalSearchQuery }) => {
         <div className="flex flex-col gap-1.5 overflow-y-auto max-h-[60vh] pr-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {targetMenuLinks.map((items) => (
             <NavLink
-              key={items.id}
+              key={items.to || `${items.id}-${items.name}`}
               to={items.to}
               onClick={() => setIsvisible(false)}
               className={({ isActive }) => `

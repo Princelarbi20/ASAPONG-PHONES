@@ -4,6 +4,17 @@ import { Loader2, AlertCircle } from 'lucide-react';
 import UpdateOrder from './UpdateOrder';
 import { formatPrice } from '@/lib/utils';
 
+const getStatusBadge = (status = 'PENDING') => {
+  const normalized = (status || 'PENDING').toUpperCase();
+  if (['SHIPPED', 'DELIVERED', 'CONFIRMED', 'PROCESSING', 'PACKED', 'OUT_FOR_DELIVERY'].includes(normalized)) {
+    return 'bg-emerald-50 text-emerald-700';
+  }
+  if (normalized === 'PENDING') {
+    return 'bg-rose-50 text-rose-700';
+  }
+  return 'bg-amber-50 text-amber-700';
+};
+
 export default function Orders() {
   const [orders, setOrders] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -46,10 +57,13 @@ export default function Orders() {
   };
 
   const handleSelectOrder = (order) => {
+    const orderId = order._id || order.id;
+    if (orderId) {
+      window.location.assign(`/admin/orders/${orderId}`);
+      return;
+    }
     setSelectedOrder(order);
   };
-
-  const closeOrderDetails = () => setSelectedOrder(null);
 
   const getImageUrl = (src) => {
     if (!src) return 'https://placehold.co/120x120?text=No+Image';
@@ -79,6 +93,7 @@ export default function Orders() {
               <tr className="bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                 <th className="px-6 py-4">Order ID</th>
                 <th className="px-6 py-4">Customer</th>
+                <th className="px-6 py-4">Payment</th>
                 <th className="px-6 py-4">Total Price</th>
                 <th className="px-6 py-4">Current Status</th>
                 <th className="px-6 py-4 text-right">Update Status</th>
@@ -97,6 +112,8 @@ export default function Orders() {
                   const displayId = id ? `#${id.substring(0, 8)}` : '#N/A';
                   const customer = order.customerName || order.user?.userName || order.user?.name || 'Guest Client';
                   const amount = order.totalPrice ?? order.totalAmount ?? order.price ?? 0;
+                  const paymentStatus = order.paymentStatus || 'PENDING';
+                  const paymentMethod = order.paymentMethod || 'CASH_ON_DELIVERY';
 
                   return (
                     <tr
@@ -106,14 +123,13 @@ export default function Orders() {
                     >
                       <td className="px-6 py-4 font-mono font-medium text-indigo-600">{displayId}</td>
                       <td className="px-6 py-4 font-medium text-gray-900">{customer}</td>
+                      <td className="px-6 py-4">
+                        <div className="text-xs uppercase tracking-wide text-gray-500">{paymentStatus}</div>
+                        <div className="text-sm font-medium text-gray-900">{paymentMethod}</div>
+                      </td>
                       <td className="px-6 py-4">{formatPrice(amount)}</td>
                       <td className="px-6 py-4">
-                        <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${['SHIPPED', 'DELIVERED', 'APPROVED'].includes((order.status || 'PENDING').toUpperCase())
-                          ? 'bg-emerald-50 text-emerald-700'
-                          : (order.status || 'PENDING').toUpperCase() === 'PENDING'
-                            ? 'bg-rose-50 text-rose-700'
-                            : 'bg-amber-50 text-amber-700'
-                          }`}>
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${getStatusBadge(order.status)}`}>
                           {order.status || 'PENDING'}
                         </span>
                       </td>
@@ -162,9 +178,10 @@ export default function Orders() {
                 <div className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm">
                   <h4 className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Shipping Address</h4>
                   <div className="mt-4 space-y-2 text-sm text-slate-700">
-                    <p className="font-medium text-slate-900">{selectedOrder.shippingAddress?.address}</p>
-                    <p>{selectedOrder.shippingAddress?.city}, {selectedOrder.shippingAddress?.state}</p>
-                    <p>{selectedOrder.shippingAddress?.country} - {selectedOrder.shippingAddress?.postalCode}</p>
+                    <p className="font-medium text-slate-900">{selectedOrder.shippingAddress?.address || 'N/A'}</p>
+                    <p>{selectedOrder.shippingAddress?.city || ''}{selectedOrder.shippingAddress?.city && selectedOrder.shippingAddress?.state ? ', ' : ''}{selectedOrder.shippingAddress?.state || ''}</p>
+                    <p>{selectedOrder.shippingAddress?.country || ''}{selectedOrder.shippingAddress?.country && selectedOrder.shippingAddress?.postalCode ? ' - ' : ''}{selectedOrder.shippingAddress?.postalCode || ''}</p>
+                    <p className="pt-2 text-slate-500">{selectedOrder.deliveryNotes || ''}</p>
                   </div>
                 </div>
 
@@ -176,8 +193,16 @@ export default function Orders() {
                       <span>{selectedOrder.items?.length ?? 0}</span>
                     </div>
                     <div className="flex justify-between">
+                      <span>Order number</span>
+                      <span className="font-semibold text-slate-900">{selectedOrder.orderNumber || 'N/A'}</span>
+                    </div>
+                    <div className="flex justify-between">
                       <span>Payment status</span>
                       <span className="font-semibold text-slate-900">{selectedOrder.paymentStatus || 'PENDING'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Payment method</span>
+                      <span className="font-semibold text-slate-900">{selectedOrder.paymentMethod || 'CASH_ON_DELIVERY'}</span>
                     </div>
                     <div className="flex justify-between rounded-3xl border-t border-slate-200 pt-3 text-base font-semibold text-slate-900">
                       <span>Total</span>

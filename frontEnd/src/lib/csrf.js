@@ -1,6 +1,9 @@
 import axios from 'axios';
 
 let csrfToken = null;
+const apiBaseUrl = import.meta.env.VITE_API_URL
+    ? `${import.meta.env.VITE_API_URL}/api/v1`
+    : '/api/v1';
 
 export const configureApiSecurity = () => {
     axios.defaults.withCredentials = true;
@@ -25,7 +28,7 @@ export const getCsrfToken = async () => {
     if (csrfToken) return csrfToken;
 
     try {
-        const response = await axios.get('/api/v1/csrf-token', { withCredentials: true });
+        const response = await axios.get(`${apiBaseUrl}/csrf-token`, { withCredentials: true });
         csrfToken = response.data?.csrfToken || null;
         return csrfToken;
     } catch {

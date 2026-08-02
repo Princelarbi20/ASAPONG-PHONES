@@ -1,11 +1,29 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import toast from 'react-hot-toast';
+import { withCsrf } from '../../lib/csrf';
 
 const OtpVerification = ({ onVerify, onResend, isLoading = false }) => {
   const OTP_LENGTH = 6;
   const [otp, setOtp] = useState(new Array(OTP_LENGTH).fill(''));
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const inputRefs = useRef([]);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const email = location.state?.email || '';
+  const [statusMessage, setStatusMessage] = useState('We have sent an OTP to your email address for verification');
+  const [resendCountdown, setResendCountdown] = useState(0);
 
   const isComplete = otp.join('').length === OTP_LENGTH;
+
+  useEffect(() => {
+    if (!resendCountdown) return;
+    const timer = window.setInterval(() => {
+      setResendCountdown((prev) => (prev > 1 ? prev - 1 : 0));
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [resendCountdown]);
 
   const handleChange = (e, index) => {
     const value = e.target.value;
@@ -38,11 +56,59 @@ const OtpVerification = ({ onVerify, onResend, isLoading = false }) => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleResend = async () => {
+    if (!email) {
+      toast.error('We could not find your email for verification. Please register again.');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      const config = await withCsrf({ withCredentials: true });
+      const response = await axios.post('/api/v1/resend-otp', { email }, config);
+      if (response.data?.success) {
+        setStatusMessage(response.data?.message || 'A new OTP has been sent.');
+        setResendCountdown(60);
+        toast.success(response.data?.message || 'A new OTP has been sent.');
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Could not resend OTP.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const finalOtp = otp.join('');
-    if (finalOtp.length === OTP_LENGTH && onVerify) {
-      onVerify(finalOtp);
+
+    if (finalOtp.length !== OTP_LENGTH) {
+      toast.error('Please enter the full 6-digit OTP.');
+      return;
+    }
+
+    if (!email) {
+      toast.error('We could not find your email for verification. Please register again.');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      const config = await withCsrf({ withCredentials: true });
+      const response = await axios.post('/api/v1/verify-otp', { email, otp: finalOtp }, config);
+
+      if (response.data?.success) {
+        toast.success('Email verified successfully. You are now logged in.');
+        navigate('/');
+        return;
+      }
+
+      toast.error(response.data?.message || 'OTP verification failed.');
+    } catch (error) {
+      const message = error.response?.data?.message || 'OTP verification failed.';
+      toast.error(message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -152,7 +218,7 @@ const OtpVerification = ({ onVerify, onResend, isLoading = false }) => {
             Enter OTP
           </h2>
           <p className="text-xs sm:text-sm text-gray-500 max-w-xs mx-auto">
-            We have sent an OTP to your email address for verification
+            {statusMessage}
           </p>
         </div>
 
@@ -185,14 +251,14 @@ const OtpVerification = ({ onVerify, onResend, isLoading = false }) => {
 
           <button
             type="submit"
-            disabled={isLoading || !isComplete}
+            disabled={isLoading || isSubmitting || !isComplete}
             className={`w-full py-3.5 font-semibold text-sm rounded-xl tracking-wider shadow-sm transition-colors duration-200 uppercase ${
               isComplete
                 ? 'bg-green-300 hover:bg-green-400 text-gray-900'
                 : 'bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 text-white'
             }`}
           >
-            {isLoading ? 'VERIFYING...' : 'NEXT'}
+            {isLoading || isSubmitting ? 'VERIFYING...' : 'NEXT'}
           </button>
         </form>
 
@@ -203,10 +269,11 @@ const OtpVerification = ({ onVerify, onResend, isLoading = false }) => {
           </p>
           <button
             type="button"
-            onClick={onResend}
-            className="text-xs font-semibold text-indigo-600 hover:text-indigo-500 transition-colors"
+            onClick={handleResend}
+            disabled={isLoading || isSubmitting || resendCountdown > 0}
+            className="text-xs font-semibold text-indigo-600 hover:text-indigo-500 transition-colors disabled:opacity-60"
           >
-            Resend Code
+            {resendCountdown > 0 ? `Resend Code in ${resendCountdown}s` : 'Resend Code'}
           </button>
         </div>
 

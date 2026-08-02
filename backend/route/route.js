@@ -21,6 +21,8 @@ import { userRegisterController } from '../controllers/authController/userRegist
 import { userLoginController } from '../controllers/authController/userloginController.js';
 import { userLogoutController } from '../controllers/authController/userlogOutController.js';
 import { resetPasswordController } from '../controllers/authController/resetPasswordController.js';
+import { verifyOtpController } from '../controllers/authController/verifyOtpController.js';
+import { resendOtpController } from '../controllers/authController/resendOtpController.js';
 
 // User & Cart Controllers
 import { addToCartController } from '../controllers/userController/addToCartController.js';
@@ -29,11 +31,13 @@ import { updateCartQuantityController } from '../controllers/userController/upda
 import { removeCartItemController } from '../controllers/userController/removeFromCartController.js';
 import { createOrderController } from '../controllers/userController/createOrderController.js';
 import { getUserOrdersController } from '../controllers/userController/getUserOrdersController.js';
+import { downloadInvoiceController } from '../controllers/userController/invoiceController.js';
 
 // Admin Controllers
 import { getAllUsersController } from '../controllers/adminControllers/getAllUsersController.js';
 import { getAllOrdersController } from '../controllers/adminControllers/getAllOrdersController.js';
 import { updateOrderStatusController } from '../controllers/adminControllers/updateOdersStatus.js';
+import { getSingleOrderController } from '../controllers/adminControllers/getSingleOrderController.js';
 import { addProductController } from '../controllers/adminControllers/addProductController.js';
 import { updateProductController } from '../controllers/adminControllers/updateProductController.js';
 import { deleteProductController } from '../controllers/adminControllers/deleteProductController.js';
@@ -53,6 +57,7 @@ import { createShopRequest } from '../controllers/dellarController/createShopeCo
 
 import { verifyPaymentController } from '../controllers/Payment-controllers/verifyPaymentController.js';
 import { initializePaymentController } from '../controllers/Payment-controllers/initializePaymentController.js';
+import { webhookPaymentController } from '../controllers/Payment-controllers/webhookPaymentController.js';
 // Router Initialization
 // ==========================================
 const router = express.Router();
@@ -61,6 +66,8 @@ const router = express.Router();
 // 1. Authentication Routes
 // ------------------------------------------
 router.post('/user-register', userRegisterController);
+router.post('/verify-otp', verifyOtpController);
+router.post('/resend-otp', resendOtpController);
 router.post('/user-login', userLoginController);
 router.post('/user-log-out', verifyToken, refreshToken, userLogoutController);
 router.put('/user-reset-password', apiLimiter, verifyToken, refreshToken, resetPasswordController);
@@ -78,6 +85,7 @@ router.delete('/remove/:productId', verifyToken, refreshToken, removeCartItemCon
 // ------------------------------------------
 router.post('/create-order', verifyToken, refreshToken, createOrderController);
 router.get('/my-orders', verifyToken, refreshToken, getUserOrdersController);
+router.get('/orders/:id/invoice', verifyToken, refreshToken, downloadInvoiceController);
 
 // ------------------------------------------
 // 4. Public Product Routes
@@ -89,6 +97,8 @@ router.get('/get-All-product', getAllProducts);
 // ------------------------------------------
 router.get('/get-all-users', verifyToken, refreshToken, isAdmin, getAllUsersController);
 router.get('/get-all-orders', verifyToken, refreshToken, isAdmin, getAllOrdersController);
+router.get('/orders/:id', verifyToken, refreshToken, isAdmin, getSingleOrderController);
+router.get('/admin/orders/:id/invoice', verifyToken, refreshToken, isAdmin, downloadInvoiceController);
 router.put('/update-orders/:id', verifyToken, refreshToken, isAdmin, updateOrderStatusController);
 
 // Admin Product Management
@@ -119,5 +129,6 @@ router.post('/dellaer-add-product', verifyToken, refreshToken, isDellaer, upload
 // ------------------------------------------
 router.post('/payment/initialize',initializePaymentController);
 router.get('/verify-payment/:reference',verifyPaymentController);
+router.post('/payment/webhook', webhookPaymentController);
 
 export default router;

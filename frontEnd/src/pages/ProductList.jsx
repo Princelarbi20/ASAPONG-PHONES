@@ -79,7 +79,7 @@ const ProductList = ({ category, linkTo }) => {
   const fetchProducts = useCallback(async () => {
     try {
       setLoading(true);
-      const { data } = await axios.get("http://localhost:5000/api/v1/get-All-product");
+      const { data } = await axios.get('/api/v1/get-All-product');
       const allProducts = Array.isArray(data) ? data : (data.products || []);
       const filteredProducts = allProducts.filter((product) => product.category?.toLowerCase() === category?.toLowerCase());
       setProducts(filteredProducts.slice(0, 10));

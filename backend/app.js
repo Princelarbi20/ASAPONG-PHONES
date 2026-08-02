@@ -50,7 +50,21 @@ app.use(
 
 // CSRF must be registered before routes that mutate state. This maintained,
 // dependency-free double-submit implementation validates X-CSRF-Token.
+app.get('/api/v1/csrf-token', (req, res) => {
+  res.json({ csrfToken: issueCsrfToken(req, res) });
+});
 
+app.use((req, res, next) => {
+  if (
+    req.path === '/user-register' ||
+    req.path === '/verify-otp' ||
+    req.path === '/resend-otp' ||
+    req.path === '/user-login'
+  ) {
+    return next();
+  }
+  return csrfProtection(req, res, next);
+});
 
 // Certificates contain sensitive documents. Only administrators can retrieve
 // them; product images remain public under /uploads.

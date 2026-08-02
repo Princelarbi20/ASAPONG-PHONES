@@ -44,7 +44,7 @@ export const Checkout = () => {
     if (!isAuthenticated) return;
     try {
       setLoadingCart(true);
-      const response = await axios.get('http://localhost:5000/api/v1/cart', {
+      const response = await axios.get('/api/v1/cart', {
         withCredentials: true
       });
 
@@ -98,11 +98,15 @@ export const Checkout = () => {
       setSubmittingOrder(true);
 
       // 1. Create the pending order first in backend
+      const normalizedPaymentMethod = paymentMethod === 'ONLINE' ? 'PAYSTACK' : 'CASH_ON_DELIVERY';
+
       const orderResponse = await axios.post(
-        'http://localhost:5000/api/v1/create-order',
-        { 
+        '/api/v1/create-order',
+        {
           shippingAddress: addressData,
-          paymentMethod 
+          paymentMethod: normalizedPaymentMethod,
+          transactionReference: null,
+          paymentMetadata: null
         },
         { withCredentials: true }
       );
@@ -128,7 +132,7 @@ export const Checkout = () => {
 
         // Initialize Paystack Payment
         const paymentResponse = await axios.post(
-          ' http://localhost:5000/api/v1/payment/initialize',
+          '/api/v1/payment/initialize',
           {
             email: userEmail,
             amount: total,
@@ -158,7 +162,9 @@ export const Checkout = () => {
 
     } catch (err) {
       console.error("Checkout submission failed:", err);
-      toast.error(err.response?.data?.message || "Could not complete your purchase transaction.", { id: orderToastId });
+      const message = err.response?.data?.message || "Could not complete your purchase transaction.";
+      const errorCode = err.response?.data?.errorCode;
+      toast.error(errorCode ? `${message} (${errorCode})` : message, { id: orderToastId });
     } finally {
       setSubmittingOrder(false);
     }
@@ -347,7 +353,7 @@ export const Checkout = () => {
                 <Loader2 className="w-4 h-4 animate-spin" /> Processing order...
               </>
             ) : paymentMethod === 'ONLINE' ? (
-              `Pay Now (${formatPrice(total)})`
+              `Pay Now  (${formatPrice(total)})`
             ) : (
               "Confirm & Authorize Order"
             )}

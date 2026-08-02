@@ -6,14 +6,18 @@ const getCookie = (name) => {
   if (parts.length === 2) return parts.pop().split(';').shift();
 };
 
+const apiBaseUrl = import.meta.env.VITE_API_URL
+  ? `${import.meta.env.VITE_API_URL}/api/v1`
+  : '/api/v1';
+
 const axiosInstance = axios.create({
-  baseURL: 'http://localhost:5000/api/v1',
+  baseURL: apiBaseUrl,
   withCredentials: true,
 });
 
 const fetchCsrfToken = async () => {
   try {
-    const response = await axios.get('http://localhost:5000/api/v1/csrf-token', {
+    const response = await axios.get(`${apiBaseUrl}/csrf-token`, {
       withCredentials: true,
     });
     return response.data?.csrfToken || null;

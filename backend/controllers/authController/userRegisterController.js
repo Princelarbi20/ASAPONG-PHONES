@@ -1,13 +1,13 @@
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
 import { randomInt } from "crypto";
 import { Register } from "../../modules/userRegister.js";
-import { setAuthCookies } from "../../utils/authCookies.js";
 import { sendEmail } from "../../utils/resend.js";
+import { normalizeEmail } from "../../utils/otpHelpers.js";
 
 export const userRegisterController = async (req, res) => {
     try {
         const { userName, email, phone, password } = req.body;
+        const normalizedEmail = normalizeEmail(email);
 
         // 1. Validate mandatory input fields
         if (!userName || !email || !phone || !password) {
@@ -28,7 +28,6 @@ export const userRegisterController = async (req, res) => {
 
         // Validate Email Syntax
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        const normalizedEmail = email.toLowerCase().trim();
         if (!emailRegex.test(normalizedEmail)) {
             return res.status(400).json({
                 success: false,
@@ -93,24 +92,7 @@ export const userRegisterController = async (req, res) => {
 
         await newUser.save();
 
-        // 5. Generate Authentication Tokens
-        const tokenPayload = { id: newUser._id, role: newUser.role };
-
-        const token = jwt.sign(
-            tokenPayload,
-            process.env.ACCESS_TOKEN_SECRET,
-            { expiresIn: process.env.ACCESS_TOKEN_EXPIRE }
-        );
-
-        const refreshToken = jwt.sign(
-            tokenPayload,
-            process.env.REFRESH_TOKEN_SECRET,
-            { expiresIn: process.env.REFRESH_TOKEN_EXPIRE }
-        );
-
-        setAuthCookies(res, token, refreshToken);
-
-        // 6. Send Styled Verification Email
+        // 5. Send Styled Verification Email
         try {
             await sendEmail({
                 to: newUser.email,
@@ -183,6 +165,7 @@ export const userRegisterController = async (req, res) => {
             success: true,
             message: "Registration successful. Please verify the OTP sent to your email.",
             accountType: "USER",
+            requiresOtpVerification: true,
             user: {
                 id: newUser._id,
                 userName: newUser.userName,

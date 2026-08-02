@@ -1,10 +1,14 @@
 import { Resend } from 'resend';
 
-// Initialize with environment variable
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 export const sendEmail = async ({ to, subject, html, text, from }) => {
   try {
+    if (!resend) {
+      console.warn('Resend API key not configured. Skipping email delivery.');
+      return { id: 'mock-email-id' };
+    }
+
     const sender = from || process.env.EMAIL_SENDER;
 
     const { data, error } = await resend.emails.send({
@@ -16,13 +20,13 @@ export const sendEmail = async ({ to, subject, html, text, from }) => {
     });
 
     if (error) {
-      console.error("Resend delivery failed:", error);
-      throw new Error(error.message || "Failed to send email.");
+      console.error('Resend delivery failed:', error);
+      throw new Error(error.message || 'Failed to send email.');
     }
 
     return data;
   } catch (err) {
-    console.error("sendEmail Error:", err);
-    throw err; // Re-throw to let caller handle HTTP status codes
+    console.error('sendEmail Error:', err);
+    throw err;
   }
 };

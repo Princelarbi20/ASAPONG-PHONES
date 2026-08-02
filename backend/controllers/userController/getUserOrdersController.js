@@ -40,11 +40,30 @@ export const getUserOrdersController = async (req, res, next) => {
     console.log(`FOUND ${userOrders.length} MATCHING ORDERS IN DB FOR THIS OBJECT_ID.`);
     console.log("==========================================");
 
+    const sanitizedOrders = userOrders.map((order) => ({
+      _id: order._id,
+      orderNumber: order.orderNumber,
+      invoiceNumber: order.invoiceNumber,
+      status: order.status,
+      paymentStatus: order.paymentStatus,
+      paymentMethod: order.paymentMethod,
+      paymentProvider: order.paymentProvider,
+      transactionReference: order.transactionReference,
+      amountPaid: order.amountPaid,
+      totalPrice: order.totalPrice,
+      currency: order.currency,
+      shippingAddress: order.shippingAddress,
+      deliveryNotes: order.deliveryNotes,
+      createdAt: order.createdAt,
+      updatedAt: order.updatedAt,
+      items: order.items,
+    }));
+
     res.status(200).json({
       success: true,
-      count: userOrders.length,
+      count: sanitizedOrders.length,
       message: "User transaction history logs parsed and delivered successfully.",
-      orders: userOrders
+      orders: sanitizedOrders
     });
 
   } catch (err) {

@@ -38,7 +38,13 @@ const Login = () => {
       
       // 2. Send login request
       const response = await axios.post('/api/v1/user-login', formData, baseConfig);
-      const { user, accountType } = response.data;
+      const { user, accountType, requiresVerification, email } = response.data || {};
+
+      if (requiresVerification) {
+        toast.error(response.data?.message || 'Your account needs verification first.');
+        navigate('/auth/otp-verify', { state: { email: email || user?.email || formData.email } });
+        return;
+      }
 
       // 3. Persist display data in Redux (JWT remains stored in HttpOnly cookie)
       dispatch(authAction.login({ user, role: user?.role, accountType }));
@@ -57,8 +63,14 @@ const Login = () => {
     } catch (error) {
       console.error("Login component trace logs:", error);
 
-      // Extract backend response error message
-      const serverMessage = error.response?.data?.message || 'Login failed. Please try again.';
+      const payload = error.response?.data || {};
+      const serverMessage = payload.message || 'Login failed. Please try again.';
+
+      if (payload.requiresVerification || payload.code === 'ACCOUNT_NOT_VERIFIED') {
+        toast.error(serverMessage, errorToastStyle);
+        navigate('/auth/otp-verify', { state: { email: payload.email || formData.email } });
+        return;
+      }
 
       // Handle specific HTTP error status codes from userLoginController
       if (error.response?.status === 403) {
